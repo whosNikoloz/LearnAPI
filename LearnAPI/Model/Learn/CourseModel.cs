@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using LearnAPI.Model.User;
+using System.ComponentModel.DataAnnotations;
 
 namespace LearnAPI.Model.Learn
 {
@@ -17,5 +18,7 @@ namespace LearnAPI.Model.Learn
         public virtual LevelModel? Level { get; set; }
 
         public virtual ICollection<SubjectModel>? Subjects { get; set; }
+
+        public virtual ICollection<CourseEnrollmentModel> Enrollments { get; set; } = new List<CourseEnrollmentModel>();
     }
 }

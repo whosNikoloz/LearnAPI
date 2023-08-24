@@ -40,7 +40,7 @@ namespace LearnAPI.Model.User
 
 
         //Learn
-        public virtual ICollection<CourseModel>? EnrolledCourses { get; set; } //კურსები რომელსაც ერთროულად გადის მაგალიტათ Javas და C# კურსი აქვს ერთროულად დაწყებული
+        public virtual ICollection<CourseEnrollmentModel> Enrollments { get; set; } = new List<CourseEnrollmentModel>(); //კურსები რომელსაც ერთროულად გადის მაგალიტათ Javas და C# კურსი აქვს ერთროულად დაწყებული
 
 
         //Posts

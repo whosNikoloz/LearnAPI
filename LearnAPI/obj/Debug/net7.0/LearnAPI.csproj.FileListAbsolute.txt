@@ -74,3 +74,7 @@ C:\Users\nikol\source\repos\LearnAPI\LearnAPI\obj\Debug\net7.0\refint\LearnAPI.d
 C:\Users\nikol\source\repos\LearnAPI\LearnAPI\obj\Debug\net7.0\LearnAPI.pdb
 C:\Users\nikol\source\repos\LearnAPI\LearnAPI\obj\Debug\net7.0\LearnAPI.genruntimeconfig.cache
 C:\Users\nikol\source\repos\LearnAPI\LearnAPI\obj\Debug\net7.0\ref\LearnAPI.dll
+C:\Users\nikol\source\repos\LearnAPI\LearnAPI\bin\Debug\net7.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+C:\Users\nikol\source\repos\LearnAPI\LearnAPI\bin\Debug\net7.0\Scrutor.dll
+C:\Users\nikol\source\repos\LearnAPI\LearnAPI\bin\Debug\net7.0\Swashbuckle.AspNetCore.Filters.dll
+C:\Users\nikol\source\repos\LearnAPI\LearnAPI\bin\Debug\net7.0\Swashbuckle.AspNetCore.Filters.Abstractions.dll
