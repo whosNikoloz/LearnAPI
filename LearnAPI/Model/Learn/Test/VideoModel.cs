@@ -1,0 +1,22 @@
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
+
+namespace LearnAPI.Model.Learn.Test
+{
+    public class VideoModel
+    {
+        [Key]
+        public int VideoId { get; set; }
+
+        [Required]
+        public string? VideoUrl { get; set; }
+
+        [Required]
+        public string? VideName { get; set; }
+
+        public string? Description { get; set; }
+
+        [ForeignKey("LevelId")]
+        public virtual LearnModel? Learn { get; set; }
+    }
+}
