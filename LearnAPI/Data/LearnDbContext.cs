@@ -12,7 +12,21 @@ namespace LearnAPI.Data
         {
 
         }
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<CourseEnrollmentModel>()
+                .HasKey(ce => new { ce.UserId, ce.CourseId }); // Configure composite primary key
 
+            modelBuilder.Entity<CourseEnrollmentModel>()
+                .HasOne(ce => ce.User)
+                .WithMany(u => u.Enrollments)
+                .HasForeignKey(ce => ce.UserId); // Configure the User navigation property
+
+            modelBuilder.Entity<CourseEnrollmentModel>()
+                .HasOne(ce => ce.Course)
+                .WithMany(c => c.Enrollments)
+                .HasForeignKey(ce => ce.CourseId);
+        }
 
         //user
 

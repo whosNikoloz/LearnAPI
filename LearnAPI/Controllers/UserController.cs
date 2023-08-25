@@ -44,7 +44,13 @@ namespace LearnAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == username);
+            var user = await _context.Users
+                .Include(u => u.Enrollments)
+                .Include(u => u.Notifications)
+                .Include(u => u.Posts)
+                .Include(u => u.Comments)
+                .Include(u => u.Progress)
+                .FirstOrDefaultAsync(u => u.UserName == username);
 
             if (user == null)
             {
@@ -94,7 +100,7 @@ namespace LearnAPI.Controllers
 
 
 
-            string verificationLink = Url.Action("Verify/Email", "User", new { token = user.VerificationToken }, Request.Scheme);
+            string verificationLink = Url.Action("VerifyEmail", "User", new { token = user.VerificationToken }, Request.Scheme);
 
 
             await SendVerificationEmail(user.Email, user.UserName, verificationLink);
@@ -113,7 +119,13 @@ namespace LearnAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+            var user = await _context.Users
+                .Include(u => u.Enrollments)
+                .Include(u => u.Notifications)
+                .Include(u => u.Posts)
+                .Include(u => u.Comments)
+                .Include(u => u.Progress)
+                .FirstOrDefaultAsync(u => u.Email == request.Email);
 
             if (user == null)
             {
@@ -145,7 +157,13 @@ namespace LearnAPI.Controllers
             }
 
 
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == request.UserName);
+            var user = await _context.Users
+                .Include(u => u.Enrollments)
+                .Include(u => u.Notifications)
+                .Include(u => u.Posts)
+                .Include(u => u.Comments)
+                .Include(u => u.Progress)
+                .FirstOrDefaultAsync(u => u.UserName == request.UserName);
 
             if (user == null)
             {
@@ -175,7 +193,13 @@ namespace LearnAPI.Controllers
             }
 
 
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.PhoneNumber == request.PhoneNumber);
+            var user = await _context.Users
+                .Include(u => u.Enrollments)
+                .Include(u => u.Notifications)
+                .Include(u => u.Posts)
+                .Include(u => u.Comments)
+                .Include(u => u.Progress)
+                .FirstOrDefaultAsync(u => u.PhoneNumber == request.PhoneNumber);
 
             if (user == null)
             {

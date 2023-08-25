@@ -1,5 +1,6 @@
 ﻿using LearnAPI.Model.User;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace LearnAPI.Model.Social
 {
@@ -12,6 +13,8 @@ namespace LearnAPI.Model.Social
         public DateTime CreatedAt { get; set; }
 
         public int UserId { get; set; }
+
+        [JsonIgnore]
         public UserModel? User { get; set; }
     }
 }
