@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LearnAPI.Migrations
 {
     [DbContext(typeof(LearnDbContext))]
-    [Migration("20230824083941_LearnInit")]
-    partial class LearnInit
+    [Migration("20230825212556_init")]
+    partial class init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -37,7 +37,7 @@ namespace LearnAPI.Migrations
 
                     b.HasIndex("CourseId");
 
-                    b.ToTable("CourseEnrollmentModel");
+                    b.ToTable("CourseEnroll");
                 });
 
             modelBuilder.Entity("LearnAPI.Model.Learn.CourseModel", b =>
@@ -58,14 +58,9 @@ namespace LearnAPI.Migrations
                     b.Property<int>("LevelId")
                         .HasColumnType("int");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
                     b.HasKey("CourseId");
 
                     b.HasIndex("LevelId");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("Courses");
                 });
@@ -226,12 +221,12 @@ namespace LearnAPI.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("SubjectModelSubjectId")
+                    b.Property<int>("SubjectId")
                         .HasColumnType("int");
 
                     b.HasKey("TestId");
 
-                    b.HasIndex("SubjectModelSubjectId");
+                    b.HasIndex("SubjectId");
 
                     b.ToTable("Tests");
                 });
@@ -438,7 +433,7 @@ namespace LearnAPI.Migrations
                     b.HasOne("LearnAPI.Model.User.UserModel", "User")
                         .WithMany("Enrollments")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Course");
@@ -454,15 +449,7 @@ namespace LearnAPI.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("LearnAPI.Model.User.UserModel", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Level");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("LearnAPI.Model.Learn.ProgressModel", b =>
@@ -533,9 +520,13 @@ namespace LearnAPI.Migrations
 
             modelBuilder.Entity("LearnAPI.Model.Learn.Test.TestModel", b =>
                 {
-                    b.HasOne("LearnAPI.Model.Learn.SubjectModel", null)
+                    b.HasOne("LearnAPI.Model.Learn.SubjectModel", "Subject")
                         .WithMany("Tests")
-                        .HasForeignKey("SubjectModelSubjectId");
+                        .HasForeignKey("SubjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Subject");
                 });
 
             modelBuilder.Entity("LearnAPI.Model.Learn.Test.VideoModel", b =>

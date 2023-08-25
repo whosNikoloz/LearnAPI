@@ -4,10 +4,11 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using LearnAPI.Data;
 using Microsoft.EntityFrameworkCore;
+using LearnAPI.Model.Learn.Test;
 
 namespace LearnAPI.Controllers
 {
-    [Route("api/")]
+    [Route("api/[controller]")]
     [ApiController]
     public class SocialController : ControllerBase
     {
@@ -24,7 +25,7 @@ namespace LearnAPI.Controllers
         //Posts
 
         [HttpGet("Posts")]
-        public async Task<IActionResult> GetPosts()
+        public async Task<ActionResult<IEnumerable<PostModel>>> GetPosts()
         {
             var posts = await _context.Posts.Include(p => p.User).Include(p => p.Comments).ToListAsync();
 

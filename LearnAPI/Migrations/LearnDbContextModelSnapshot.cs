@@ -218,12 +218,12 @@ namespace LearnAPI.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("SubjectModelSubjectId")
+                    b.Property<int>("SubjectId")
                         .HasColumnType("int");
 
                     b.HasKey("TestId");
 
-                    b.HasIndex("SubjectModelSubjectId");
+                    b.HasIndex("SubjectId");
 
                     b.ToTable("Tests");
                 });
@@ -517,9 +517,13 @@ namespace LearnAPI.Migrations
 
             modelBuilder.Entity("LearnAPI.Model.Learn.Test.TestModel", b =>
                 {
-                    b.HasOne("LearnAPI.Model.Learn.SubjectModel", null)
+                    b.HasOne("LearnAPI.Model.Learn.SubjectModel", "Subject")
                         .WithMany("Tests")
-                        .HasForeignKey("SubjectModelSubjectId");
+                        .HasForeignKey("SubjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Subject");
                 });
 
             modelBuilder.Entity("LearnAPI.Model.Learn.Test.VideoModel", b =>
