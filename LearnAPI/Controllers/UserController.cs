@@ -110,6 +110,24 @@ namespace LearnAPI.Controllers
 
 
 
+        [HttpDelete("Auth/Remove/{userid}"), Authorize(Roles = "admin")]
+        public async Task<IActionResult> RemoveUser(int userid)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userid);
+            if(user == null)
+            {
+                return BadRequest("use not Found");
+            }
+
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+
+            return Ok("user Rmeoved");
+        }
+
+
+
+
         [HttpPost("Auth/Email")]
         public async Task<IActionResult> LoginWithEmail(UserLoginEmailRequest request)
         {

@@ -268,6 +268,8 @@ namespace LearnAPI.Controllers
 
             var subjects = await _context.Subjects
                 .Include(u => u.Tests)
+                .Include(u => u.Course)
+                .Include(u => u.Tests)
                 .ToListAsync();
 
             return Ok(subjects);
@@ -278,6 +280,8 @@ namespace LearnAPI.Controllers
         {
 
             var subject = await _context.Subjects
+                .Include(u => u.Tests)
+                .Include(u => u.Course)
                 .Include(u => u.Tests)
                 .FirstOrDefaultAsync(u => u.CourseId == subjectid);
 
@@ -413,6 +417,7 @@ namespace LearnAPI.Controllers
             {
                 Question = test.Question,
                 Hint = test.Hint,
+                SubjectId = test.SubjectId
             };
 
 
@@ -456,9 +461,11 @@ namespace LearnAPI.Controllers
         /////////////////////ANSWER
         ///
         [HttpPost("{testId}/answers")]
-        public async Task<ActionResult<TestModel>> AddAnswerToTest(int testId, TestAnswerModel answer)
+        public async Task<ActionResult<TestModel>> AddAnswerToTest(int testId, NewTestAnswerModel answer)
         {
-            var test = await _context.Tests.Include(t => t.Answers).FirstOrDefaultAsync(t => t.TestId == testId);
+            var test = await _context.Tests
+                .Include(t => t.Answers)
+                .FirstOrDefaultAsync(t => t.TestId == testId);
 
             if (test == null)
             {
@@ -470,11 +477,28 @@ namespace LearnAPI.Controllers
                 test.Answers = new List<TestAnswerModel>();
             }
 
-            test.Answers.Add(answer);
-            await _context.SaveChangesAsync();
+            var Answer = new TestAnswerModel
+            {
+                Option = answer.Option,
+                IsCorrect = answer.IsCorrect,
+                TestId = testId,
+            }; 
+
+            _context.TestAnswers.Add(Answer);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                // Log the exception or handle it in a way that makes sense for your application
+                // You might inform the user about the concurrency issue and prompt for action
+            }
 
             return CreatedAtAction(nameof(GetTest), new { id = test.TestId }, test);
         }
+
 
     }
 }

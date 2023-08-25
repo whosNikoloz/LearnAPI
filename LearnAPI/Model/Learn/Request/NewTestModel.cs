@@ -9,5 +9,8 @@ namespace LearnAPI.Model.Learn.Request
 
 
         public string? Hint { get; set; }
+
+
+        public int SubjectId { get; set; }
     }
 }

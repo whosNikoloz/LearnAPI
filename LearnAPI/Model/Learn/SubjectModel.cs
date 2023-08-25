@@ -1,5 +1,6 @@
 ﻿using LearnAPI.Model.Learn.Test;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace LearnAPI.Model.Learn
 {
@@ -16,6 +17,8 @@ namespace LearnAPI.Model.Learn
 
 
         public int CourseId { get; set; }
+
+        [JsonIgnore]
         public virtual CourseModel? Course { get; set; }
 
         public virtual ICollection<TestModel>? Tests { get; set; }

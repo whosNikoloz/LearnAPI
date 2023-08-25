@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace LearnAPI.Model.Learn.Test
 {
@@ -7,11 +8,17 @@ namespace LearnAPI.Model.Learn.Test
     {
         [Key]
         public int AnswerId { get; set; }
-        public string? Option { get; set; }
+
+        [Required]
+        public string Option { get; set; }
 
         public bool IsCorrect { get; set; }
 
-        [ForeignKey("TestId")]
+        // Foreign Key
+        public int TestId { get; set; }
+
+        // Navigation Property
+        [JsonIgnore]
         public virtual TestModel? Test { get; set; }
     }
 }
