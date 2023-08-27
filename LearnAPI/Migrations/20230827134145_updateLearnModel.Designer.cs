@@ -4,6 +4,7 @@ using LearnAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LearnAPI.Migrations
 {
     [DbContext(typeof(LearnDbContext))]
-    partial class LearnDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230827134145_updateLearnModel")]
+    partial class updateLearnModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -166,9 +169,6 @@ namespace LearnAPI.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("SubjectId")
-                        .HasColumnType("int");
-
                     b.Property<int>("TestId")
                         .HasColumnType("int");
 
@@ -177,10 +177,7 @@ namespace LearnAPI.Migrations
 
                     b.HasKey("LearnId");
 
-                    b.HasIndex("SubjectId");
-
-                    b.HasIndex("TestId")
-                        .IsUnique();
+                    b.HasIndex("TestId");
 
                     b.ToTable("Learn");
                 });
@@ -220,9 +217,6 @@ namespace LearnAPI.Migrations
 
                     b.Property<string>("Hint")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("LearnId")
-                        .HasColumnType("int");
 
                     b.Property<string>("Question")
                         .IsRequired()
@@ -507,19 +501,11 @@ namespace LearnAPI.Migrations
 
             modelBuilder.Entity("LearnAPI.Model.Learn.Test.LearnModel", b =>
                 {
-                    b.HasOne("LearnAPI.Model.Learn.SubjectModel", "Subject")
-                        .WithMany("LearnMaterials")
-                        .HasForeignKey("SubjectId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("LearnAPI.Model.Learn.Test.TestModel", "Test")
-                        .WithOne("Learn")
-                        .HasForeignKey("LearnAPI.Model.Learn.Test.LearnModel", "TestId")
+                        .WithMany()
+                        .HasForeignKey("TestId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Subject");
 
                     b.Navigation("Test");
                 });
@@ -604,8 +590,6 @@ namespace LearnAPI.Migrations
 
             modelBuilder.Entity("LearnAPI.Model.Learn.SubjectModel", b =>
                 {
-                    b.Navigation("LearnMaterials");
-
                     b.Navigation("Tests");
                 });
 
@@ -618,8 +602,6 @@ namespace LearnAPI.Migrations
             modelBuilder.Entity("LearnAPI.Model.Learn.Test.TestModel", b =>
                 {
                     b.Navigation("Answers");
-
-                    b.Navigation("Learn");
                 });
 
             modelBuilder.Entity("LearnAPI.Model.Social.PostModel", b =>

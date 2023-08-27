@@ -3,10 +3,8 @@ using LearnAPI.Model.Learn;
 using LearnAPI.Model.Learn.Request;
 using LearnAPI.Model.Learn.Test;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Data;
 
 namespace LearnAPI.Controllers
 {
@@ -267,9 +265,8 @@ namespace LearnAPI.Controllers
         {
 
             var subjects = await _context.Subjects
-                .Include(u => u.Tests)
+                .Include(u => u.LearnMaterials)
                 .Include(u => u.Course)
-                .Include(u => u.Tests)
                 .ToListAsync();
 
             return Ok(subjects);
@@ -280,9 +277,8 @@ namespace LearnAPI.Controllers
         {
 
             var subject = await _context.Subjects
-                .Include(u => u.Tests)
+                .Include(u => u.LearnMaterials)
                 .Include(u => u.Course)
-                .Include(u => u.Tests)
                 .FirstOrDefaultAsync(u => u.CourseId == subjectid);
 
 
@@ -417,7 +413,7 @@ namespace LearnAPI.Controllers
             {
                 Question = test.Question,
                 Hint = test.Hint,
-                SubjectId = test.SubjectId
+               // SubjectId = test.SubjectId
             };
 
 
@@ -499,6 +495,95 @@ namespace LearnAPI.Controllers
             return CreatedAtAction(nameof(GetTest), new { id = test.TestId }, test);
         }
 
+        //Learn-test//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
+        [HttpGet("Learn/Learn-Test")]
+        public async Task<ActionResult<IEnumerable<LearnModel>>> GetLearns()
+        {
+            return await _context.Learn.Include(t => t.Test).ToListAsync();
+        }
+
+
+        [HttpGet("Learn/{id}")]
+        public async Task<ActionResult<LearnModel>> GetLearn(int id)
+        {
+            var learn = await _context.Learn.Include(t => t.Test).FirstOrDefaultAsync(t => t.LearnId == id);
+
+            if (learn == null)
+            {
+                return NotFound();
+            }
+
+            return learn;
+        }
+
+        [HttpPost("Learn")]
+        public async Task<IActionResult> PostLearn(NewLearnModel learn,int testid)
+        {
+            var test = await _context.Tests.FirstOrDefaultAsync(u => u.TestId == testid);
+
+            if(test == null)
+            {
+                return NotFound();
+            }
+
+            var Learn = new LearnModel
+            {
+                LearnName = learn.LearnName,
+                Description = learn.Description,
+                Test = test
+            };
+
+
+            _context.Learn.Add(Learn);
+            await _context.SaveChangesAsync();
+
+            return Ok(Learn);
+        }
+
+
+        [HttpPut("Learn/{id}")]
+        public async Task<IActionResult> PutLearn(int id, LearnModel learn)
+        {
+            if (id != learn.LearnId)
+            {
+                return BadRequest();
+            }
+
+            _context.Entry(learn).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        [HttpDelete("Learn/{id}")]
+        public async Task<IActionResult> DeleteLearn(int id)
+        {
+            var learn = await _context.Learn.FindAsync(id);
+
+            if (learn == null)
+            {
+                return NotFound();
+            }
+
+            _context.Learn.Remove(learn);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+
+        
     }
 }

@@ -4,6 +4,7 @@ using LearnAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LearnAPI.Migrations
 {
     [DbContext(typeof(LearnDbContext))]
-    partial class LearnDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230827143647_TestModel")]
+    partial class TestModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -228,12 +231,12 @@ namespace LearnAPI.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("SubjectId")
+                    b.Property<int?>("SubjectModelSubjectId")
                         .HasColumnType("int");
 
                     b.HasKey("TestId");
 
-                    b.HasIndex("SubjectId");
+                    b.HasIndex("SubjectModelSubjectId");
 
                     b.ToTable("Tests");
                 });
@@ -537,13 +540,9 @@ namespace LearnAPI.Migrations
 
             modelBuilder.Entity("LearnAPI.Model.Learn.Test.TestModel", b =>
                 {
-                    b.HasOne("LearnAPI.Model.Learn.SubjectModel", "Subject")
+                    b.HasOne("LearnAPI.Model.Learn.SubjectModel", null)
                         .WithMany("Tests")
-                        .HasForeignKey("SubjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Subject");
+                        .HasForeignKey("SubjectModelSubjectId");
                 });
 
             modelBuilder.Entity("LearnAPI.Model.Learn.Test.VideoModel", b =>

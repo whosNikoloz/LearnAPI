@@ -32,6 +32,13 @@ namespace LearnAPI.Data
                 .WithMany(s => s.Tests)          // Specify the collection navigation property in SubjectModel
                 .HasForeignKey(t => t.SubjectId) // Specify the foreign key property
                 .IsRequired();
+
+            modelBuilder.Entity<LearnModel>()
+                .HasOne(l => l.Subject)
+                .WithMany(s => s.LearnMaterials)
+                .HasForeignKey(l => l.SubjectId)
+                .OnDelete(DeleteBehavior.Restrict);
+
         }
 
         //user

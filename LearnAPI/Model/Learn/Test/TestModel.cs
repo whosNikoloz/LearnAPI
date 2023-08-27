@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace LearnAPI.Model.Learn.Test
 {
@@ -21,5 +22,9 @@ namespace LearnAPI.Model.Learn.Test
 
 
         public virtual ICollection<TestAnswerModel>? Answers { get; set; }
+
+        public int LearnId { get; set; }
+        public virtual LearnModel? Learn { get; set; }
+
     }
 }

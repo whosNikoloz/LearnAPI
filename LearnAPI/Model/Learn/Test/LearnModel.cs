@@ -6,7 +6,7 @@ namespace LearnAPI.Model.Learn.Test
     public class LearnModel
     {
         [Key]
-        public int LevelId { get; set; }
+        public int LearnId { get; set; }
 
         [Required]
         public string? LearnName { get; set; }
@@ -21,5 +21,10 @@ namespace LearnAPI.Model.Learn.Test
 
         [ForeignKey("TestId")]
         public virtual TestModel Test { get; set; } = null!;
+
+        public int SubjectId { get; set; }
+        public virtual SubjectModel? Subject { get; set; }
+
+
     }
 }
