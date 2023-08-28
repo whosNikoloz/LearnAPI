@@ -8,7 +8,5 @@
 
         public string? LogoURL { get; set; }
 
-
-        public int CourseId { get; set; }
     }
 }

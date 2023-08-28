@@ -5,6 +5,7 @@ using LearnAPI.Model.Learn.Test;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Formats.Asn1;
 
 namespace LearnAPI.Controllers
 {
@@ -266,6 +267,7 @@ namespace LearnAPI.Controllers
 
             var subjects = await _context.Subjects
                 .Include(u => u.LearnMaterials)
+                .Include(u => u.Tests)
                 .Include(u => u.Course)
                 .ToListAsync();
 
@@ -278,6 +280,7 @@ namespace LearnAPI.Controllers
 
             var subject = await _context.Subjects
                 .Include(u => u.LearnMaterials)
+                .Include(u => u.Tests)
                 .Include(u => u.Course)
                 .FirstOrDefaultAsync(u => u.CourseId == subjectid);
 
@@ -286,25 +289,34 @@ namespace LearnAPI.Controllers
         }
 
 
-        [HttpPost("Subject"), Authorize(Roles = "admin")]
-        public async Task<IActionResult> AddSubject(NewSubjectModel newsubject)
+        [HttpPost("Subject")]
+        public async Task<IActionResult> AddSubject(NewSubjectModel newsubject,string coursename)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            if (_context.Subjects.Any(u => u.SubjectName == newsubject.SubjectName))
+            var course = await _context.Courses.FirstOrDefaultAsync(u => u.CourseName == coursename);
+
+            if (course == null)
             {
-                return BadRequest("Course Already Exists");
+                return NotFound("Course Already Exists");
             }
+
+            if (_context.Subjects.Any(u => u.SubjectName == newsubject.SubjectName && u.CourseId == course.CourseId))
+            {
+                return BadRequest("Subject Already Exists");
+            }
+
+            
 
             var subject = new SubjectModel
             {
                 SubjectName = newsubject.SubjectName,
                 Description = newsubject.Description,
                 LogoURL =newsubject.LogoURL,
-                CourseId = newsubject.CourseId,
+                CourseId = course.CourseId,
             };
 
 
@@ -413,7 +425,7 @@ namespace LearnAPI.Controllers
             {
                 Question = test.Question,
                 Hint = test.Hint,
-               // SubjectId = test.SubjectId
+                SubjectId = test.SubjectId
             };
 
 
@@ -455,7 +467,19 @@ namespace LearnAPI.Controllers
 
 
         /////////////////////ANSWER
-        ///
+
+
+        [HttpGet("answers/{testid}")]
+        public async Task<ActionResult<TestModel>> GetAnswers(int testId)
+        {
+            var test = await _context.Tests
+                .Include(t => t.Answers)
+                .FirstOrDefaultAsync(t => t.TestId == testId);
+
+            return CreatedAtAction(nameof(GetTest), new { id = test.TestId }, test);
+        }
+
+
         [HttpPost("{testId}/answers")]
         public async Task<ActionResult<TestModel>> AddAnswerToTest(int testId, NewTestAnswerModel answer)
         {
@@ -495,6 +519,20 @@ namespace LearnAPI.Controllers
             return CreatedAtAction(nameof(GetTest), new { id = test.TestId }, test);
         }
 
+        [HttpDelete("answers/{testid}")]
+        public async Task<IActionResult> DeleteAnswers(int answerid)
+        {
+            var answer = await _context.TestAnswers
+                .FirstOrDefaultAsync(t => t.AnswerId == answerid);
+
+            if(answer == null)
+            {
+                return NotFound();
+            }
+
+            return Ok("Deleted");
+        }
+
         //Learn-test//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -508,17 +546,17 @@ namespace LearnAPI.Controllers
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-        [HttpGet("Learn/Learn-Test")]
+        [HttpGet("LearnMaterials")]
         public async Task<ActionResult<IEnumerable<LearnModel>>> GetLearns()
         {
-            return await _context.Learn.Include(t => t.Test).ToListAsync();
+            return await _context.Learn.Include(t => t.Question).ToListAsync();
         }
 
 
-        [HttpGet("Learn/{id}")]
+        [HttpGet("LearnMaterial/{id}")]
         public async Task<ActionResult<LearnModel>> GetLearn(int id)
         {
-            var learn = await _context.Learn.Include(t => t.Test).FirstOrDefaultAsync(t => t.LearnId == id);
+            var learn = await _context.Learn.Include(t => t.Question).FirstOrDefaultAsync(t => t.LearnId == id);
 
             if (learn == null)
             {
@@ -528,21 +566,36 @@ namespace LearnAPI.Controllers
             return learn;
         }
 
-        [HttpPost("Learn")]
-        public async Task<IActionResult> PostLearn(NewLearnModel learn,int testid)
+        [HttpPost("LearnMaterial")]
+        public async Task<IActionResult> PostLearn(NewLearnModel learn,string subjectname,string coursename)
         {
-            var test = await _context.Tests.FirstOrDefaultAsync(u => u.TestId == testid);
+            var course = await _context.Courses.FirstOrDefaultAsync(u => u.CourseName == coursename);
 
-            if(test == null)
+
+            if(course == null)
             {
                 return NotFound();
+            }
+
+            var subject = await _context.Subjects.FirstOrDefaultAsync(u => u.SubjectName == subjectname && u.CourseId == course.CourseId);
+
+
+            if (subject == null)
+            {
+                return NotFound();
+            }
+
+            if (_context.Learn.Any(u => u.LearnName == learn.LearnName))
+            {
+                return BadRequest("Learn Already Exists");
             }
 
             var Learn = new LearnModel
             {
                 LearnName = learn.LearnName,
                 Description = learn.Description,
-                Test = test
+                SubjectId = subject.SubjectId,
+                VideoId = learn.VideoId
             };
 
 
@@ -553,7 +606,7 @@ namespace LearnAPI.Controllers
         }
 
 
-        [HttpPut("Learn/{id}")]
+        [HttpPut("LearnMaterial/{id}")]
         public async Task<IActionResult> PutLearn(int id, LearnModel learn)
         {
             if (id != learn.LearnId)
@@ -567,7 +620,7 @@ namespace LearnAPI.Controllers
             return NoContent();
         }
 
-        [HttpDelete("Learn/{id}")]
+        [HttpDelete("LearnMaterial/{id}")]
         public async Task<IActionResult> DeleteLearn(int id)
         {
             var learn = await _context.Learn.FindAsync(id);

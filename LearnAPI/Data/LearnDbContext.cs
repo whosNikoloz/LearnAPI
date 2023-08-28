@@ -44,6 +44,9 @@ namespace LearnAPI.Data
         //user
 
         public DbSet<UserModel> Users { get; set; }
+        public DbSet<ProgressModel> Progress { get; set; }
+
+
 
 
         //Social

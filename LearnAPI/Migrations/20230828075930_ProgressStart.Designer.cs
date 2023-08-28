@@ -4,6 +4,7 @@ using LearnAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LearnAPI.Migrations
 {
     [DbContext(typeof(LearnDbContext))]
-    partial class LearnDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230828075930_ProgressStart")]
+    partial class ProgressStart
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -101,6 +104,9 @@ namespace LearnAPI.Migrations
                     b.Property<int?>("LastCompletedSubjectId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("LastCompletedTestId")
+                        .HasColumnType("int");
+
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
@@ -111,6 +117,8 @@ namespace LearnAPI.Migrations
                     b.HasIndex("LastCompletedCourseId");
 
                     b.HasIndex("LastCompletedSubjectId");
+
+                    b.HasIndex("LastCompletedTestId");
 
                     b.HasIndex("UserId")
                         .IsUnique();
@@ -465,6 +473,10 @@ namespace LearnAPI.Migrations
                         .WithMany()
                         .HasForeignKey("LastCompletedSubjectId");
 
+                    b.HasOne("LearnAPI.Model.Learn.Test.TestModel", "LastCompletedTest")
+                        .WithMany()
+                        .HasForeignKey("LastCompletedTestId");
+
                     b.HasOne("LearnAPI.Model.User.UserModel", "User")
                         .WithOne("Progress")
                         .HasForeignKey("LearnAPI.Model.Learn.ProgressModel", "UserId")
@@ -476,6 +488,8 @@ namespace LearnAPI.Migrations
                     b.Navigation("LastCompletedCourse");
 
                     b.Navigation("LastCompletedSubject");
+
+                    b.Navigation("LastCompletedTest");
 
                     b.Navigation("User");
                 });

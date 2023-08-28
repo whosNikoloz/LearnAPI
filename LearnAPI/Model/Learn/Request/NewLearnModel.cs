@@ -10,5 +10,7 @@ namespace LearnAPI.Model.Learn.Request
 
         [Required]
         public string? Description { get; set; }
+
+        public int VideoId { get; set; }
     }
 }
