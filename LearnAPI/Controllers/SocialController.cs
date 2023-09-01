@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 using LearnAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using LearnAPI.Model.Learn.Test;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 
 namespace LearnAPI.Controllers
 {
@@ -72,9 +74,12 @@ namespace LearnAPI.Controllers
         }
 
 
-        [HttpPost("Posts/{Userid}")]
+        [HttpPost("Posts/{Userid}"), Authorize]
         public async Task<IActionResult> CreatePost(PostRequestModel Post, int Userid)
         {
+            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value; //JWT id ჩეკავს
+            var JWTRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value; //JWT Role
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -84,6 +89,13 @@ namespace LearnAPI.Controllers
             if (user == null)
             {
                 return BadRequest("User Not Found");
+            }
+            if (userId != user.UserId.ToString())
+            {
+                if(JWTRole != "admin")
+                {
+                    return BadRequest("Authorize invalid");
+                }
             }
 
             var NewPost = new PostModel
@@ -108,9 +120,13 @@ namespace LearnAPI.Controllers
             return Ok(NewPost);
         }
 
-        [HttpPut("Posts")]
+        [HttpPut("Posts"), Authorize]
         public async Task<IActionResult> EditPost(EditPostRequestModel EditedPost)
         {
+            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value; //JWT id ჩეკავს
+            var JWTRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value; //JWT Role
+
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -130,6 +146,14 @@ namespace LearnAPI.Controllers
             if (user == null)
             {
                 return BadRequest("User Not Found");
+            }
+
+            if (userId != user.UserId.ToString())
+            {
+                if (JWTRole != "admin")
+                {
+                    return BadRequest("Authorize invalid");
+                }
             }
 
 
@@ -157,14 +181,26 @@ namespace LearnAPI.Controllers
             return Ok(post);
         }
 
-        [HttpDelete("Posts/{postId}")]
+        [HttpDelete("Posts/{postId}"), Authorize]
         public async Task<IActionResult> DeletePost(int postId)
         {
+
+            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value; //JWT id ჩეკავს
+            var JWTRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value; //JWT Role
+
             var post = await _context.Posts.Include(u => u.User).FirstOrDefaultAsync(u => u.PostId == postId);  //მაძლევს Users პოსტებით
 
             if (post == null) { return NotFound(); }
 
             var user = await _context.Users.Include(u => u.Posts).FirstOrDefaultAsync(u => u.UserId == post.User.UserId);  //მაძლევს Users პოსტებით
+
+            if (userId != user.UserId.ToString())
+            {
+                if (JWTRole != "admin")
+                {
+                    return BadRequest("Authorize invalid");
+                }
+            }
 
             if (user == null) { return NotFound(); }
 
@@ -192,12 +228,16 @@ namespace LearnAPI.Controllers
 
 
 
-        [HttpPost("Comments/{postid}")]
+        [HttpPost("Comments/{postid}"), Authorize]
         public async Task<IActionResult> CreateComment(CommentRequestModel comment, int postid, int userid)
         {
+            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value; //JWT id ჩეკავს
+            var JWTRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value; //JWT Role
+
+
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState); 
+                return BadRequest(ModelState);
             }
 
 
@@ -216,6 +256,14 @@ namespace LearnAPI.Controllers
             if (user == null)
             {
                 return NotFound(); // Handle if the post doesn't exist
+            }
+
+            if (userId != user.UserId.ToString())
+            {
+                if (JWTRole != "admin")
+                {
+                    return BadRequest("Authorize invalid");
+                }
             }
 
             var NewComment = new CommentModel
@@ -286,15 +334,27 @@ namespace LearnAPI.Controllers
 
 
 
-        [HttpDelete("Comments/{commentId}")]
+        [HttpDelete("Comments/{commentId}"), Authorize]
         public async Task<IActionResult> DeleteComments(int commentId, int userId)
         {
+            var UserId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value; //JWT id ჩეკავს
+            var JWTRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value; //JWT Role
+
             var comment = await _context.Comments.Include(p => p.User).FirstOrDefaultAsync(p => p.CommentId == commentId);
 
             if (comment.User.UserId != userId)
             {
                 return NotFound();
             }
+
+            if (UserId != userId.ToString())
+            {
+                if (JWTRole != "admin")
+                {
+                    return BadRequest("Authorize invalid");
+                }
+            }
+
 
             // Remove associated notifications
             var relatedNotifications = await _context.Notifications
@@ -309,9 +369,15 @@ namespace LearnAPI.Controllers
         }
 
 
-        [HttpPut("Comments")]
+        [HttpPut("Comments"), Authorize]
         public async Task<IActionResult> EditCommentar(EditCommentReqeustModel EditedComment)
         {
+
+
+            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value; //JWT id ჩეკავს
+            var JWTRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value; //JWT Role
+
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -331,6 +397,11 @@ namespace LearnAPI.Controllers
             if (user == null)
             {
                 return BadRequest("User Not Found");
+            }
+
+            if (userId != user.UserId.ToString() || JWTRole != "admin")
+            {
+                return BadRequest("Authorize invalid");
             }
 
 
@@ -367,16 +438,27 @@ namespace LearnAPI.Controllers
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        
 
-        [HttpGet("Notifications/{userId}")]
+
+        [HttpGet("Notifications/{userId}"), Authorize]
         public async Task<IActionResult> GetUserNotifications(int userId)
         {
+            var UserId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value; //JWT id ჩეკავს
+            var JWTRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value; //JWT Role
+
             var user = await _context.Users.Include(u => u.Notifications).FirstOrDefaultAsync(u => u.UserId == userId);
 
             if (user == null)
             {
                 return NotFound("User not found");
+            }
+
+            if (UserId != userId.ToString())
+            {
+                if (JWTRole != "admin")
+                {
+                    return BadRequest("Authorize invalid");
+                }
             }
 
             var notifications = user.Notifications.OrderByDescending(n => n.CreatedAt).ToList();

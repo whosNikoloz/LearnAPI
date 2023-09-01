@@ -318,6 +318,9 @@ namespace LearnAPI.Controllers
                 return BadRequest(ModelState);
             }
 
+     
+
+
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == imagerequest.Email);
 
             if (user == null)
@@ -471,7 +474,7 @@ namespace LearnAPI.Controllers
                                 <div style=""color: rgb(0, 0, 0); text-align: center;"">
                                   <h1 style=""margin: 1rem 0"">👋</h1>
                                   <h1 style=""margin: 1rem 0"">მოგესალმებით, {user} !</h1>
-                                  <p style=""padding-bottom: 16px"">გმადლობთ, რომ დარეგისტრირდით საიტი.ge. თქვენი ანგარიშის გასააქტიურებლად, გთხოვთ,დააჭიროთ ქვემოთ მოცემულ ღილაკს</p>
+                                  <p style=""padding-bottom: 16px"">გმადლობთ, რომ დარეგისტრირდით LearnCode.ge-ზე თქვენი ანგარიშის გასააქტიურებლად, გთხოვთ,დააჭიროთ ქვემოთ მოცემულ ღილაკს</p>
                                   <a href={confirmationLink} class='button'>გააქტიურება</a>
                                   <p style=""padding-bottom: 16px"">თუ ამ მისამართის დადასტურება არ მოგითხოვიათ, შეგიძლიათ იგნორირება გაუკეთოთ ამ ელფოსტას.</p>
                                   <p style=""padding-bottom: 16px"">გმადლობთ, კომპანია team</p>
@@ -558,7 +561,7 @@ namespace LearnAPI.Controllers
                                 <div style=""color: rgb(0, 0, 0); text-align: center;"">
                                   <h1 style=""margin: 1rem 0"">🔒</h1>
                                   <h1 style=""margin: 1rem 0"">მოგესალმებით, {user}</h1>
-                                  <p style=""padding-bottom: 16px"">თქვენი საიტი.GE-ს ანგარიშიდან მოთხოვნილია პაროლის აღდგენა. ახალი პაროლის დასაყენებლად გთხოვთ დააჭიროთ პაროლის აღდგენის ღილაკს.</p>
+                                  <p style=""padding-bottom: 16px"">თქვენი LearnCode-ს ანგარიშიდან მოთხოვნილია პაროლის აღდგენა. ახალი პაროლის დასაყენებლად გთხოვთ დააჭიროთ პაროლის აღდგენის ღილაკს.</p>
                                   <a href={confirmationLink} class='button'>პაროლის აღდგენა</a>
                                   <p style=""padding-bottom: 16px"">თუ პაროლის გადაყენება არ მოგითხოვიათ, შეგიძლიათ უგულებელყოთ ეს ელფოსტა.</p>
                                   <p style=""padding-bottom: 16px"">გმადლობთ, კომპანია team</p>
@@ -633,6 +636,7 @@ namespace LearnAPI.Controllers
         {
             List<Claim> calims = new List<Claim>
             {
+             new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
               new Claim(ClaimTypes.Name, user.UserName),
               new Claim(ClaimTypes.Role, user.Role),
               new Claim(ClaimTypes.Email, user.Email)
