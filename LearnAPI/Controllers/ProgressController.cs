@@ -2,9 +2,11 @@
 using LearnAPI.Model.Learn;
 using LearnAPI.Model.Learn.Request;
 using LearnAPI.Model.User;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace LearnAPI.Controllers
 {
@@ -21,19 +23,31 @@ namespace LearnAPI.Controllers
             _context = context;
         }
 
-        [HttpPost("complete-subject")]
+        /// <summary>
+        /// აღნიშნავს საგანს მომხმარებლისთვის დასრულებულად.
+        /// </summary>
+        /// <param name="request">დასრულების მოთხოვნა, რომელიც შეიცავს მომხმარებლის და საგნის ინფორმაციას.</param>
+        [HttpPost("complete-subject"), Authorize]
         public async Task<IActionResult> CompleteSubject([FromBody] CompletionRequest request)
         {
             return await Complete(request.UserId, request.SubjectId, null, null);
         }
 
-        [HttpPost("complete-course")]
+        /// <summary>
+        /// აღნიშნავს კურსს მომხმარებლისთვის დასრულებულად.
+        /// </summary>
+        /// <param name="request">დასრულების მოთხოვნა, რომელიც შეიცავს მომხმარებლის და კურსის ინფორმაციას.</param>
+        [HttpPost("complete-course"), Authorize]
         public async Task<IActionResult> CompleteCourse([FromBody] CompletionRequest request)
         {
             return await Complete(request.UserId, null, request.CourseId, null);
         }
 
-        [HttpPost("complete-level")]
+        /// <summary>
+        /// აღნიშნავს დონეს დასრულებულად მომხმარებლისთვის.
+        /// </summary>
+        /// <param name="request">დასრულების მოთხოვნა, რომელიც შეიცავს მომხმარებლის და დონის ინფორმაციას.</param>
+        [HttpPost("complete-level"), Authorize]
         public async Task<IActionResult> CompleteLevel([FromBody] CompletionRequest request)
         {
             return await Complete(request.UserId, null, null, request.LevelId);
@@ -41,10 +55,21 @@ namespace LearnAPI.Controllers
 
         private async Task<IActionResult> Complete(int userId, int? subjectId, int? courseId, int? levelId)
         {
+            var UserId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value; //JWT id ჩეკავს
+            var JWTRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value; //JWT Role
+
             var user = await GetUserWithProgress(userId);
             if (user == null)
             {
                 return NotFound("User not found");
+            }
+
+            if (UserId != user.UserId.ToString())
+            {
+                if (JWTRole != "admin")
+                {
+                    return BadRequest("Authorize invalid");
+                }
             }
 
             if (user.Progress == null)
@@ -99,6 +124,5 @@ namespace LearnAPI.Controllers
 
             return user;
         }
-
     }
 }

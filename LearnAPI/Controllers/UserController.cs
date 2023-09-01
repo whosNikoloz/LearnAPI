@@ -29,13 +29,19 @@ namespace LearnAPI.Controllers
             _context = context;
         }
 
+
+        // მოიძიეთ ყველა მომხმარებლის სია.
+        // მოითხოვს ადმინისტრატორის პრივილეგიებს.
+        // GET api/Users
         [HttpGet("Users"), Authorize(Roles = "admin")]
         public async Task<IActionResult> GetUsers()
         {
             return Ok(await _context.Users.ToListAsync());
         }
 
-
+        // მიიღეთ კონკრეტული მომხმარებლის პროფილი მომხმარებლის სახელით.
+        // საჭიროებს ავთენტიფიკაციას.
+        // GET api/User/{username}
         [HttpGet("User/{username}"), Authorize]
         public async Task<IActionResult> GetUser(string username)
         {
@@ -43,6 +49,7 @@ namespace LearnAPI.Controllers
             {
                 return BadRequest(ModelState);
             }
+
 
             var user = await _context.Users
                 .Include(u => u.Enrollments)
@@ -59,6 +66,8 @@ namespace LearnAPI.Controllers
             return Ok(user);
         }
 
+        // ახალი მომხმარებლის რეგისტრაცია.
+        // POST api/Auth/რეგისტრაცია
         [HttpPost("Auth/Register")]
         public async Task<IActionResult> RegisterUser(UserRegisterRequest request)
         {
@@ -109,7 +118,9 @@ namespace LearnAPI.Controllers
         }
 
 
-
+        // ამოიღეთ მომხმარებელი ID-ით.
+        // მოითხოვს ადმინისტრატორის პრივილეგიებს.
+        // DELETE api/Auth/Remove/{userid}
         [HttpDelete("Auth/Remove/{userid}"), Authorize(Roles = "admin")]
         public async Task<IActionResult> RemoveUser(int userid)
         {
@@ -127,7 +138,8 @@ namespace LearnAPI.Controllers
 
 
 
-
+        // შედით ელექტრონული ფოსტით და პაროლით.
+        // POST api/Auth/Email
         [HttpPost("Auth/Email")]
         public async Task<IActionResult> LoginWithEmail(UserLoginEmailRequest request)
         {
@@ -166,6 +178,8 @@ namespace LearnAPI.Controllers
 
         }
 
+        // შედით მომხმარებლის სახელით და პაროლით.
+        // POST api/Auth/Username
         [HttpPost("Auth/Username")]
         public async Task<IActionResult> LoginWithUserName(UserLoginUserNameRequest request)
         {
@@ -202,6 +216,9 @@ namespace LearnAPI.Controllers
 
             return Ok(user);
         }
+
+        // შედით ტელეფონის ნომრით და პაროლით.
+        // POST api/Auth/Phone
         [HttpPost("Auth/Phone")]
         public async Task<IActionResult> LoginWithPhoneNumber(UserLoginPhoneRequest request)
         {
@@ -239,7 +256,11 @@ namespace LearnAPI.Controllers
             return Ok(user);
         }
 
-        //Changess//
+
+
+        // შეცვალეთ მომხმარებლის პაროლი.
+        // საჭიროებს ავთენტიფიკაციას.
+        // POST api/User/ChangePassword
         [HttpPost("User/ChangePassword"), Authorize]
         public async Task<IActionResult> ChangePassword(UserModel requestuser, string newpassword, string oldpassword)
         {
@@ -249,10 +270,19 @@ namespace LearnAPI.Controllers
             }
 
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == requestuser.Email);
+            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value; //JWT id ჩეკავს
+            var JWTRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value; //JWT Role
 
             if (user == null)
             {
                 return BadRequest("user not found.");
+            }
+            if (userId != user.UserId.ToString())
+            {
+                if (JWTRole != "admin")
+                {
+                    return BadRequest("Authorize invalid");
+                }
             }
             if (!VerifyPasswordHash(oldpassword, requestuser.PasswordHash, requestuser.PasswordSalt))
             {
@@ -280,6 +310,10 @@ namespace LearnAPI.Controllers
             return Ok(requestuser);
         }
 
+
+        // შეცვალეთ მომხმარებლის სახელი ან ტელეფონის ნომერი.
+        // საჭიროებს ავთენტიფიკაციას.
+        // POST api/User/ChangeUsernameOrNumber
         [HttpPost("User/ChangeUsernameOrNumber"), Authorize]
         public async Task<IActionResult> ChangeUsernameOrNumber(UserModel requestuser)
         {
@@ -287,12 +321,21 @@ namespace LearnAPI.Controllers
             {
                 return BadRequest(ModelState);
             }
+            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value; //JWT id ჩეკავს
+            var JWTRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value; //JWT Role
 
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == requestuser.Email);
 
             if (user == null)
             {
                 return BadRequest("user not found.");
+            }
+            if (userId != user.UserId.ToString())
+            {
+                if (JWTRole != "admin")
+                {
+                    return BadRequest("Authorize invalid");
+                }
             }
 
             user.UserName = requestuser.UserName;
@@ -310,6 +353,10 @@ namespace LearnAPI.Controllers
             }
         }
 
+
+        // ატვირთეთ მომხმარებლის პროფილის სურათი.
+        // საჭიროებს ავთენტიფიკაციას.
+        // POST api/User/UploadImage
         [HttpPost("User/UploadImage"), Authorize]
         public async Task<IActionResult> UploadUserProfileImage(UserModel imagerequest)
         {
@@ -318,7 +365,8 @@ namespace LearnAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-     
+            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value; //JWT id ჩეკავს
+            var JWTRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value; //JWT Role
 
 
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == imagerequest.Email);
@@ -326,6 +374,13 @@ namespace LearnAPI.Controllers
             if (user == null)
             {
                 return BadRequest("user not found.");
+            }
+            if (userId != user.UserId.ToString())
+            {
+                if (JWTRole != "admin")
+                {
+                    return BadRequest("Authorize invalid");
+                }
             }
 
             user.Picture = imagerequest.Picture;
@@ -344,7 +399,8 @@ namespace LearnAPI.Controllers
 
 
 
-
+        // გადაამოწმეთ მომხმარებლის ელ.ფოსტის მისამართი ნიშნის გამოყენებით.
+        // GET api/Verify/Email
         [HttpGet("Verify/Email")]
         public async Task<IActionResult> VerifyEmail(string token)
         {
@@ -367,6 +423,9 @@ namespace LearnAPI.Controllers
         }
 
 
+
+        // მოითხოვეთ პაროლის აღდგენა ელექტრონული ფოსტით.
+        // POST api/User/ForgotPassword
         [HttpPost("User/ForgotPassword")]
         public async Task<IActionResult> ForgotPasswordRequest(string email)
         {
@@ -398,6 +457,9 @@ namespace LearnAPI.Controllers
         }
 
 
+
+        // გადააყენეთ მომხმარებლის პაროლი გადატვირთვის ნიშნის გამოყენებით.
+        // POST api/User/ResetPassword
         [HttpPost("User/ResetPassword")]
         public async Task<IActionResult> ResetPassword(ResetPasswordRequest request)
         {
