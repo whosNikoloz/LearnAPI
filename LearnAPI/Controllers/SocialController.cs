@@ -31,9 +31,15 @@ namespace LearnAPI.Controllers
         /// </summary>
 
         [HttpGet("Posts")]
-        public async Task<ActionResult<IEnumerable<PostModel>>> GetPosts()
+        public async Task<ActionResult<IEnumerable<PostModel>>> GetPosts([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            var posts = await _context.Posts.Include(p => p.User).Include(p => p.Comments).ToListAsync();
+            var query = _context.Posts.Include(p => p.User).Include(p => p.Comments).AsQueryable();
+
+            // Calculate the number of items to skip
+            int skip = (page - 1) * pageSize;
+
+            // Apply pagination
+            var posts = await query.Skip(skip).Take(pageSize).ToListAsync();
 
             var responseList = new List<object>();
 
@@ -51,7 +57,7 @@ namespace LearnAPI.Controllers
                     {
                         userId = post.User.UserId,
                         username = post.User.UserName,
-                        picture = post.Picture,
+                        picture = post.User.Picture,
                     },
                     comments = post.Comments
                 };
@@ -60,8 +66,8 @@ namespace LearnAPI.Controllers
             }
 
             return Ok(responseList);
-
         }
+
 
         /// <summary>
         /// მიიღეთ კონკრეტული პოსტი მისი ID-ით.
