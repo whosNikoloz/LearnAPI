@@ -13,6 +13,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using LearnAPI.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Cors;
 
 namespace LearnAPI.Controllers
 {
@@ -174,7 +175,23 @@ namespace LearnAPI.Controllers
 
             string jwttoken = CreateToken(user);
 
-            return Ok(new { User = user, Token = jwttoken });
+            var response = new
+            {
+                User = new
+                {
+                    userId = user.UserId,
+                    userName = user.UserName,
+                    firstName = user.FirstName,
+                    lastName = user.LastName,
+                    email = user.Email,
+                    phoneNumber = user.PhoneNumber,
+                    picture = user.Picture,
+                    notificaton = user.Notifications
+                },
+                Token = jwttoken
+            };
+
+            return Ok(response);
 
         }
 

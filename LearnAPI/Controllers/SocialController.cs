@@ -52,10 +52,13 @@ namespace LearnAPI.Controllers
                     content = post.Content,
                     video = post.Video,
                     picture = post.Picture,
+                    subject = post.Subject,
                     createdAt = post.CreateDate,
                     user = new
                     {
                         userId = post.User.UserId,
+                        firstname = post.User.FirstName,
+                        lastname = post.User.LastName,
                         username = post.User.UserName,
                         picture = post.User.Picture,
                     },

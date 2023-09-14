@@ -78,3 +78,9 @@ C:\Users\nikol\source\repos\LearnAPI\LearnAPI\bin\Debug\net7.0\Microsoft.AspNetC
 C:\Users\nikol\source\repos\LearnAPI\LearnAPI\bin\Debug\net7.0\Scrutor.dll
 C:\Users\nikol\source\repos\LearnAPI\LearnAPI\bin\Debug\net7.0\Swashbuckle.AspNetCore.Filters.dll
 C:\Users\nikol\source\repos\LearnAPI\LearnAPI\bin\Debug\net7.0\Swashbuckle.AspNetCore.Filters.Abstractions.dll
+C:\Users\nikol\source\repos\LearnAPI\LearnAPI\bin\Debug\net7.0\System.Web.Cors.dll
+C:\Users\nikol\source\repos\LearnAPI\LearnAPI\bin\Debug\net7.0\System.Net.Http.Formatting.dll
+C:\Users\nikol\source\repos\LearnAPI\LearnAPI\bin\Debug\net7.0\System.Web.Http.dll
+C:\Users\nikol\source\repos\LearnAPI\LearnAPI\bin\Debug\net7.0\System.Web.Http.Cors.dll
+C:\Users\nikol\source\repos\LearnAPI\LearnAPI\bin\Debug\net7.0\Newtonsoft.Json.dll
+C:\Users\nikol\source\repos\LearnAPI\LearnAPI\bin\Debug\net7.0\Newtonsoft.Json.Bson.dll
