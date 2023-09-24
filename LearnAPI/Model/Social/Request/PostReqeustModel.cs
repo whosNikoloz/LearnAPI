@@ -5,8 +5,6 @@ namespace LearnAPI.Model.Social.Request
     public class PostRequestModel
     {
         [Required]
-        public string? Title { get; set; }
-
         public string? Subject { get; set; }
 
         [Required]

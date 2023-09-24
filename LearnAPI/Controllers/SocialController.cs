@@ -31,9 +31,14 @@ namespace LearnAPI.Controllers
         /// </summary>
 
         [HttpGet("Posts")]
-        public async Task<ActionResult<IEnumerable<PostModel>>> GetPosts([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        public async Task<ActionResult<IEnumerable<object>>> GetPosts([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            var query = _context.Posts.Include(p => p.User).Include(p => p.Comments).AsQueryable();
+            var query = _context.Posts
+                .Include(p => p.User)
+                .Include(p => p.Comments)
+                    .ThenInclude(c => c.User) // Include the user for each comment
+                .OrderByDescending(p => p.CreateDate) // Sort by creation date in descending order
+                .AsQueryable();
 
             // Calculate the number of items to skip
             int skip = (page - 1) * pageSize;
@@ -48,7 +53,6 @@ namespace LearnAPI.Controllers
                 var postResponse = new
                 {
                     postId = post.PostId,
-                    title = post.Title,
                     content = post.Content,
                     video = post.Video,
                     picture = post.Picture,
@@ -62,7 +66,22 @@ namespace LearnAPI.Controllers
                         username = post.User.UserName,
                         picture = post.User.Picture,
                     },
-                    comments = post.Comments
+                    comments = post.Comments.Select(comment => new
+                    {
+                        commentId = comment.CommentId,
+                        commentContent = comment.Content,
+                        commentPicture = comment.Picture,
+                        commentVideo = comment.Video,
+                        commentCreatedAt = comment.CreatedAt,
+                        commentUser = new
+                        {
+                            userId = comment.User.UserId,
+                            firstname = comment.User.FirstName,
+                            lastname = comment.User.LastName,
+                            username = comment.User.UserName,
+                            picture = comment.User.Picture,
+                        }
+                    }).ToList()
                 };
 
                 responseList.Add(postResponse);
@@ -70,6 +89,63 @@ namespace LearnAPI.Controllers
 
             return Ok(responseList);
         }
+
+
+
+
+        [HttpGet("LastPost")]
+        public async Task<ActionResult<object>> GetLastPost()
+        {
+            var lastPost = await _context.Posts
+                .Include(p => p.User)
+                .Include(p => p.Comments)
+                    .ThenInclude(c => c.User) // Include the user for each comment
+                .OrderByDescending(p => p.CreateDate)
+                .FirstOrDefaultAsync();
+
+            if (lastPost == null)
+            {
+                return NotFound(); // No posts found
+            }
+
+            var postResponse = new
+            {
+                postId = lastPost.PostId,
+                content = lastPost.Content,
+                video = lastPost.Video,
+                picture = lastPost.Picture,
+                subject = lastPost.Subject,
+                createdAt = lastPost.CreateDate,
+                user = new
+                {
+                    userId = lastPost.User.UserId,
+                    firstname = lastPost.User.FirstName,
+                    lastname = lastPost.User.LastName,
+                    username = lastPost.User.UserName,
+                    picture = lastPost.User.Picture,
+                },
+                comments = lastPost.Comments.Select(comment => new
+                {
+                    commentId = comment.CommentId,
+                    commentContent = comment.Content,
+                    commentPicture = comment.Picture,
+                    commentVideo = comment.Video,
+                    commentCreatedAt = comment.CreatedAt,
+                    commentUser = new
+                    {
+                        userId = comment.User.UserId,
+                        firstname = comment.User.FirstName,
+                        lastname = comment.User.LastName,
+                        username = comment.User.UserName,
+                        picture = comment.User.Picture,
+                    }
+                }).ToList()
+            };
+
+            return Ok(postResponse);
+        }
+
+
 
 
         /// <summary>
@@ -87,10 +163,63 @@ namespace LearnAPI.Controllers
         /// მიიღეთ პოსტები კონკრეტული თემით.
         /// </summary>
         /// <param name="subject">პოსტების გაფილტვრის საგანი.</param>
-        [HttpGet("Post/{subject}")]
-        public async Task<IActionResult> PostsWithSubjeect(string subject)
+        [HttpGet("Posts/{subject}")]
+        public async Task<IActionResult> PostsWithSubjeect(string subject, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            return Ok(await _context.Posts.FirstOrDefaultAsync(u => u.Subject == subject));
+            var query = _context.Posts
+                .Where(u => u.Subject == subject)
+                .Include(p => p.User)
+                .Include(p => p.Comments)
+                    .ThenInclude(c => c.User) // Include the user for each comment
+                .OrderByDescending(p => p.CreateDate) // Sort by creation date in descending order
+                .AsQueryable();
+            int skip = (page - 1) * pageSize;
+
+            // Apply pagination
+            var posts = await query.Skip(skip).Take(pageSize).ToListAsync();
+
+            var responseList = new List<object>();
+
+            foreach (var post in posts)
+            {
+                var postResponse = new
+                {
+                    postId = post.PostId,
+                    content = post.Content,
+                    video = post.Video,
+                    picture = post.Picture,
+                    subject = post.Subject,
+                    createdAt = post.CreateDate,
+                    user = new
+                    {
+                        userId = post.User.UserId,
+                        firstname = post.User.FirstName,
+                        lastname = post.User.LastName,
+                        username = post.User.UserName,
+                        picture = post.User.Picture,
+                    },
+                    comments = post.Comments.Select(comment => new
+                    {
+                        commentId = comment.CommentId,
+                        commentContent = comment.Content,
+                        commentPicture = comment.Picture,
+                        commentVideo = comment.Video,
+                        commentCreatedAt = comment.CreatedAt,
+                        commentUser = new
+                        {
+                            userId = comment.User.UserId,
+                            firstname = comment.User.FirstName,
+                            lastname = comment.User.LastName,
+                            username = comment.User.UserName,
+                            picture = comment.User.Picture,
+                        }
+                    }).ToList()
+                };
+
+                responseList.Add(postResponse);
+            }
+
+            return Ok(responseList);
 
         }
 
@@ -99,8 +228,8 @@ namespace LearnAPI.Controllers
         /// </summary>
         /// <param name="Post">პოსტის ინფორმაციის შექმნა.</param>
         /// <param name="Userid">პოსტის შემქმნელი მომხმარებლის ID.</param>
-        [HttpPost("Posts/{Userid}"), Authorize]
-        public async Task<IActionResult> CreatePost(PostRequestModel Post, int Userid)
+        [HttpPost("Posts/"), Authorize]
+        public async Task<IActionResult> CreatePost(PostRequestModel Post)
         {
             var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value; //JWT id ჩეკავს
             var JWTRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value; //JWT Role
@@ -109,7 +238,7 @@ namespace LearnAPI.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var user = await _context.Users.Include(u => u.Posts).FirstOrDefaultAsync(u => u.UserId == Userid);  //მაძლევს Users პოსტებით
+            var user = await _context.Users.Include(u => u.Posts).FirstOrDefaultAsync(u => u.UserId.ToString() == userId);  //მაძლევს Users პოსტებით
 
             if (user == null)
             {
@@ -125,7 +254,6 @@ namespace LearnAPI.Controllers
 
             var NewPost = new PostModel
             {
-                Title = Post.Title,
                 Subject = Post.Subject,
                 Content = Post.Content,
                 Video = Post.Video,
@@ -190,7 +318,6 @@ namespace LearnAPI.Controllers
 
 
 
-            post.Title = EditedPost.Title;
             post.Subject = EditedPost.Subject;
             post.Content = EditedPost.Content;
             post.Video = EditedPost.Video;
@@ -217,15 +344,17 @@ namespace LearnAPI.Controllers
         [HttpDelete("Posts/{postId}"), Authorize]
         public async Task<IActionResult> DeletePost(int postId)
         {
+            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value; // JWT id check
+            var JWTRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value; // JWT Role
 
-            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value; //JWT id ჩეკავს
-            var JWTRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value; //JWT Role
+            var post = await _context.Posts.Include(u => u.User).FirstOrDefaultAsync(u => u.PostId == postId); // Fetch the post
 
-            var post = await _context.Posts.Include(u => u.User).FirstOrDefaultAsync(u => u.PostId == postId);  //მაძლევს Users პოსტებით
+            if (post == null)
+            {
+                return NotFound();
+            }
 
-            if (post == null) { return NotFound(); }
-
-            var user = await _context.Users.Include(u => u.Posts).FirstOrDefaultAsync(u => u.UserId == post.User.UserId);  //მაძლევს Users პოსტებით
+            var user = await _context.Users.Include(u => u.Posts).FirstOrDefaultAsync(u => u.UserId == post.User.UserId);
 
             if (userId != user.UserId.ToString())
             {
@@ -235,16 +364,26 @@ namespace LearnAPI.Controllers
                 }
             }
 
-            if (user == null) { return NotFound(); }
+            if (user == null)
+            {
+                return NotFound();
+            }
 
+            // Retrieve comments associated with the post
+            var comments = await _context.Comments.Where(c => c.Post.PostId == postId).ToListAsync();
+
+            // Remove the comments
+            _context.Comments.RemoveRange(comments);
+
+            // Remove the post
             user.Posts.Remove(post);
-
-
             _context.Posts.Remove(post);
+
             await _context.SaveChangesAsync();
 
-            return Ok("Succesfully Deleted");
+            return Ok("Successfully Deleted");
         }
+
 
 
         // ---------- Comments ----------
@@ -257,7 +396,7 @@ namespace LearnAPI.Controllers
         /// <param name="postid">პოსტის ID, რომელთანაც ასოცირდება კომენტარი.</param>
         /// <param name="userid">კომენტარის შემქმნელი მომხმარებლის ID.</param>
         [HttpPost("Comments/{postid}"), Authorize]
-        public async Task<IActionResult> CreateComment(CommentRequestModel comment, int postid, int userid)
+        public async Task<IActionResult> CreateComment(CommentRequestModel comment, int postid)
         {
             var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value; //JWT id ჩეკავს
             var JWTRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value; //JWT Role
@@ -278,7 +417,7 @@ namespace LearnAPI.Controllers
             }
 
 
-            var user = await _context.Users.Include(u => u.Posts).FirstOrDefaultAsync(u => u.UserId == userid);
+            var user = await _context.Users.Include(u => u.Posts).FirstOrDefaultAsync(u => u.UserId.ToString() == userId);
 
 
             if (user == null)
@@ -304,11 +443,11 @@ namespace LearnAPI.Controllers
                 User = user,
             };
 
-            if (post.User.UserId != userid) // Avoid sending notifications to the comment author
+            if (post.User.UserId.ToString() != userId) // Avoid sending notifications to the comment author
             {
                 var notification = new NotificationModel
                 {
-                    Message = $"{user.UserName} დატოვა კომენტარი თქვენს პოსტზე: {post.Title}",
+                    Message = $"{user.UserName} დატოვა კომენტარი თქვენს პოსტზე: {post.Content}",
                     CreatedAt = DateTime.Now,
                     IsRead = false,
                     User = post.User
@@ -372,30 +511,22 @@ namespace LearnAPI.Controllers
         /// <param name="commentId">წაშლილი კომენტარის ID.</param>
         /// <param name="userId">კომენტარს წაშლის მომხმარებლის ID.</param>
         [HttpDelete("Comments/{commentId}"), Authorize]
-        public async Task<IActionResult> DeleteComments(int commentId, int userId)
+        public async Task<IActionResult> DeleteComments(int commentId)
         {
             var UserId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value; //JWT id ჩეკავს
             var JWTRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value; //JWT Role
 
             var comment = await _context.Comments.Include(p => p.User).FirstOrDefaultAsync(p => p.CommentId == commentId);
 
-            if (comment.User.UserId != userId)
+            if (comment.User.UserId.ToString() != UserId)
             {
                 return NotFound();
-            }
-
-            if (UserId != userId.ToString())
-            {
-                if (JWTRole != "admin")
-                {
-                    return BadRequest("Authorize invalid");
-                }
             }
 
 
             // Remove associated notifications
             var relatedNotifications = await _context.Notifications
-                .Where(n => n.User.UserId == userId && n.Message.Contains($"comment {comment.CommentId}"))
+                .Where(n => n.User.UserId.ToString() == UserId && n.Message.Contains($"comment {comment.CommentId}"))
                 .ToListAsync();
 
             _context.Notifications.RemoveRange(relatedNotifications);

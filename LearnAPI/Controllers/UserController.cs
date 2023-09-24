@@ -108,9 +108,9 @@ namespace LearnAPI.Controllers
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
+            string host = "192.168.1.68:45457";
 
-
-            string verificationLink = Url.Action("VerifyEmail", "User", new { token = user.VerificationToken }, Request.Scheme);
+            string verificationLink = Url.ActionLink("VerifyEmail", "User", new { token = user.VerificationToken }, Request.Scheme, host);
 
 
             await SendVerificationEmail(user.Email, user.UserName, verificationLink);
@@ -436,7 +436,10 @@ namespace LearnAPI.Controllers
             user.VerifiedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
-            return Ok("User verified successfully.");
+            string verificationSuccessUrl = "http://192.168.1.68:3000/users/auth/verification-successful";
+
+            // Redirect the user to the verification success URL
+            return Redirect(verificationSuccessUrl);
         }
 
 
@@ -547,13 +550,13 @@ namespace LearnAPI.Controllers
                           <tr>
                             <td style=""padding: 40px 0px 0px;"">
                               <div style=""text-align: left;"">
-                                <div style=""padding-bottom: 20px;""><img src=""https://i.ibb.co/Qbnj4mz/logo.png"" alt=""Company"" style=""width: 56px;""></div>
+                                <div style=""padding-bottom: 20px;""><img src=""https://firebasestorage.googleapis.com/v0/b/eduspace-a81b5.appspot.com/o/EduSpaceLogo.png?alt=media&token=7b7dc8a5-05d8-4348-9b4c-c19913949c67"" alt=""Company"" style=""width: 56px;""></div>
                               </div>
                               <div style=""padding: 20px; background-color: rgb(255, 255, 255); border-radius: 20px;"">
                                 <div style=""color: rgb(0, 0, 0); text-align: center;"">
                                   <h1 style=""margin: 1rem 0"">👋</h1>
                                   <h1 style=""margin: 1rem 0"">მოგესალმებით, {user} !</h1>
-                                  <p style=""padding-bottom: 16px"">გმადლობთ, რომ დარეგისტრირდით LearnCode.ge-ზე თქვენი ანგარიშის გასააქტიურებლად, გთხოვთ,დააჭიროთ ქვემოთ მოცემულ ღილაკს</p>
+                                  <p style=""padding-bottom: 16px"">გმადლობთ, რომ დარეგისტრირდით EduSpace-ზე თქვენი ანგარიშის გასააქტიურებლად, გთხოვთ,დააჭიროთ ქვემოთ მოცემულ ღილაკს</p>
                                   <a href={confirmationLink} class='button'>გააქტიურება</a>
                                   <p style=""padding-bottom: 16px"">თუ ამ მისამართის დადასტურება არ მოგითხოვიათ, შეგიძლიათ იგნორირება გაუკეთოთ ამ ელფოსტას.</p>
                                   <p style=""padding-bottom: 16px"">გმადლობთ, კომპანია team</p>
@@ -576,7 +579,7 @@ namespace LearnAPI.Controllers
 
             using (MailMessage message = new MailMessage("noreplynika@gmail.com", email))
             {
-                message.Subject = "Email Verification";
+                message.Subject = "EduSpace.ge მომხმარებლის აქტივაცია";
                 message.Body = messageBody;
                 message.IsBodyHtml = true;
 
@@ -634,13 +637,13 @@ namespace LearnAPI.Controllers
                           <tr>
                             <td style=""padding: 40px 0px 0px;"">
                               <div style=""text-align: left;"">
-                                <div style=""padding-bottom: 20px;""><img src=""https://i.ibb.co/Qbnj4mz/logo.png"" alt=""Company"" style=""width: 56px;""></div>
+                                <div style=""padding-bottom: 20px;""><img src=""https://firebasestorage.googleapis.com/v0/b/eduspace-a81b5.appspot.com/o/EduSpaceLogo.png?alt=media&token=7b7dc8a5-05d8-4348-9b4c-c19913949c67"" alt=""Company"" style=""width: 56px;""></div>
                               </div>
                               <div style=""padding: 20px; background-color: rgb(255, 255, 255); border-radius: 20px;"">
                                 <div style=""color: rgb(0, 0, 0); text-align: center;"">
                                   <h1 style=""margin: 1rem 0"">🔒</h1>
                                   <h1 style=""margin: 1rem 0"">მოგესალმებით, {user}</h1>
-                                  <p style=""padding-bottom: 16px"">თქვენი LearnCode-ს ანგარიშიდან მოთხოვნილია პაროლის აღდგენა. ახალი პაროლის დასაყენებლად გთხოვთ დააჭიროთ პაროლის აღდგენის ღილაკს.</p>
+                                  <p style=""padding-bottom: 16px"">თქვენი EduSpace-ს ანგარიშიდან მოთხოვნილია პაროლის აღდგენა. ახალი პაროლის დასაყენებლად გთხოვთ დააჭიროთ პაროლის აღდგენის ღილაკს.</p>
                                   <a href={confirmationLink} class='button'>პაროლის აღდგენა</a>
                                   <p style=""padding-bottom: 16px"">თუ პაროლის გადაყენება არ მოგითხოვიათ, შეგიძლიათ უგულებელყოთ ეს ელფოსტა.</p>
                                   <p style=""padding-bottom: 16px"">გმადლობთ, კომპანია team</p>
@@ -663,7 +666,7 @@ namespace LearnAPI.Controllers
 
             using (MailMessage message = new MailMessage("noreplynika@gmail.com", email))
             {
-                message.Subject = "Email Verification";
+                message.Subject = "EduSpace.ge ანგარიშის აღდგენა";
                 message.Body = messageBody;
                 message.IsBodyHtml = true;
 
