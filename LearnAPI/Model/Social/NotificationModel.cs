@@ -12,7 +12,12 @@ namespace LearnAPI.Model.Social
         public bool IsRead { get; set; }
         public DateTime CreatedAt { get; set; }
 
+        public string CommentAuthorUsername { get; set; }
+
+        public string CommentAuthorPicture { get; set; }
+
         public int UserId { get; set; }
+        
 
         [JsonIgnore]
         public UserModel? User { get; set; }

@@ -14,6 +14,8 @@ namespace LearnAPI.Model.Learn
 
         public string? Description { get; set; }
 
+        public string? CourseLogo { get; set; }
+
         public int LevelId { get; set; } // Foreign key property
 
         [JsonIgnore]

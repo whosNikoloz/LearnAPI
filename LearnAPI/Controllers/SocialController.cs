@@ -447,9 +447,11 @@ namespace LearnAPI.Controllers
             {
                 var notification = new NotificationModel
                 {
-                    Message = $"{user.UserName} დატოვა კომენტარი თქვენს პოსტზე: {post.Content}",
+                    Message = $"{post.Content}",
                     CreatedAt = DateTime.Now,
                     IsRead = false,
+                    CommentAuthorUsername = user.UserName,
+                    CommentAuthorPicture = user.Picture,
                     User = post.User
                 };
 

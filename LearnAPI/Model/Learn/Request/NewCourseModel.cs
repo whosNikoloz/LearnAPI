@@ -9,6 +9,8 @@ namespace LearnAPI.Model.Learn.Request
 
         public string? Description { get; set; }
 
+        public string? CourseLogo { get; set; }
+
         public int LevelId { get; set; }
     }
 }

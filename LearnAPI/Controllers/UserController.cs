@@ -108,7 +108,7 @@ namespace LearnAPI.Controllers
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            string host = "192.168.1.68:45457";
+            string host = "192.168.1.68:45455";
 
             string verificationLink = Url.ActionLink("VerifyEmail", "User", new { token = user.VerificationToken }, Request.Scheme, host);
 
@@ -152,7 +152,7 @@ namespace LearnAPI.Controllers
 
             var user = await _context.Users
                 .Include(u => u.Enrollments)
-                .Include(u => u.Notifications)
+                .Include(u => u.Notifications.OrderByDescending(n => n.CreatedAt)) // Order notifications by createdAt in descending order
                 .Include(u => u.Posts)
                 .Include(u => u.Comments)
                 .Include(u => u.Progress)
@@ -186,7 +186,7 @@ namespace LearnAPI.Controllers
                     email = user.Email,
                     phoneNumber = user.PhoneNumber,
                     picture = user.Picture,
-                    notificaton = user.Notifications
+                    notification = user.Notifications
                 },
                 Token = jwttoken
             };

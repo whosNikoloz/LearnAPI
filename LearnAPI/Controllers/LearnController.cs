@@ -199,6 +199,7 @@ namespace LearnAPI.Controllers
             {
                 CourseName = newCourseModel.CourseName,
                 Description = newCourseModel.Description,
+                CourseLogo = newCourseModel.CourseLogo,
                 LevelId = newCourseModel.LevelId
             };
 
