@@ -38,6 +38,10 @@ namespace LearnAPI.Model.User
 
         public string? Role { get; set; }
 
+        // OAuth-specific properties
+        public string? OAuthProvider { get; set; } // Store the OAuth provider (e.g., "Google")
+        public string? OAuthProviderId { get; set; } // Store the unique identifier provided by the OAuth provider
+
 
         //Learn
         public virtual ICollection<CourseEnrollmentModel> Enrollments { get; set; } = new List<CourseEnrollmentModel>(); //კურსები რომელსაც ერთროულად გადის მაგალიტათ Javas და C# კურსი აქვს ერთროულად დაწყებული

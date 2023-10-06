@@ -14,6 +14,7 @@ using System.Security.Cryptography;
 using LearnAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Cors;
+using Azure.Core;
 
 namespace LearnAPI.Controllers
 {
@@ -119,6 +120,47 @@ namespace LearnAPI.Controllers
         }
 
 
+        [HttpPost("Auth/RegisterOAuth2")]
+        public async Task<IActionResult> RegisterOAuthUser(OAuthUserRegisterRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            // Check if a user with the same OAuthProvider and OAuthProviderId already exists
+            if (_context.Users.Any(u => u.OAuthProvider == request.oAuthProvider && u.OAuthProviderId == request.oAuthProviderId))
+            {
+                return BadRequest("OAuth2 User already exists.");
+            }
+
+            // Create a new user record
+            var user = new UserModel
+            {
+                Email = request.email,
+                UserName = request.username,
+                FirstName = request.firstName,
+                LastName = request.lastName,
+                Picture = request.picture,
+                OAuthProvider = request.oAuthProvider,
+                OAuthProviderId = request.oAuthProviderId,
+                VerifiedAt = DateTime.Now,
+                VerificationToken = CreateRandomToken()
+            };
+
+            // Set user role and other properties as needed
+            user.Role = "user"; // Assign "user" role
+
+            // Save the new user to the database
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            // Generate a verification link and send a verification email if needed
+
+            return Ok("OAuth2 User successfully registered.");
+        }
+
+
         // ამოიღეთ მომხმარებელი ID-ით.
         // მოითხოვს ადმინისტრატორის პრივილეგიებს.
         // DELETE api/Auth/Remove/{userid}
@@ -138,6 +180,76 @@ namespace LearnAPI.Controllers
         }
 
 
+        [HttpPost("Auth/OAuthEmail")]
+        public async Task<IActionResult> LoginOAuth2(OAuth2LoginRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var user = await _context.Users
+                .Include(u => u.Enrollments)
+                .Include(u => u.Notifications.OrderByDescending(n => n.CreatedAt)) // Order notifications by createdAt in descending order
+                .Include(u => u.Posts)
+                .Include(u => u.Comments)
+                .Include(u => u.Progress)
+                .FirstOrDefaultAsync(u => u.OAuthProvider == request.OAuthProvider && u.OAuthProviderId == request.OAuthProviderId); // Fix the comparison here
+
+            if (user == null)
+            {
+                return BadRequest("User not found.");
+            }
+
+            // Normally, OAuth2 authentication would have already occurred, and you'd have an access token
+            // and user information from the OAuth2 provider.
+
+            // Instead of checking a password, you can assume that if the user exists and reached this point,
+            // they have successfully authenticated through OAuth2.
+
+            // You can generate a JWT token or another type of authentication token for the user at this point.
+            string jwttoken = CreateToken(user);
+
+            var response = new
+            {
+                User = new
+                {
+                    userId = user.UserId,
+                    userName = user.UserName,
+                    firstName = user.FirstName,
+                    lastName = user.LastName,
+                    email = user.Email,
+                    phoneNumber = user.PhoneNumber,
+                    picture = user.Picture,
+                    notification = user.Notifications
+                },
+                Token = jwttoken
+            };
+
+            return Ok(response);
+        }
+
+
+
+        // შედით ელექტრონული ფოსტით და პაროლით.
+        // POST api/Auth/Email
+        [HttpPost("Auth/CheckeMailExist/{email}")]
+        public async Task<IActionResult> CheckeMailExist(string email)
+        {
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+            if (user == null)
+            {
+                return BadRequest(false);
+            }
+            return Ok(true);
+        }
 
         // შედით ელექტრონული ფოსტით და პაროლით.
         // POST api/Auth/Email

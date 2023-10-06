@@ -55,6 +55,9 @@ namespace LearnAPI.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("FormattedCourseName")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("LevelId")
                         .HasColumnType("int");
 
@@ -390,6 +393,12 @@ namespace LearnAPI.Migrations
                     b.Property<string>("LastName")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("OAuthProvider")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OAuthProviderId")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<byte[]>("PasswordHash")
                         .IsRequired()

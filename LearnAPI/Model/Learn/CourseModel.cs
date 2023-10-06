@@ -12,6 +12,7 @@ namespace LearnAPI.Model.Learn
         [Required]
         public string? CourseName { get; set; }
 
+        public string? FormattedCourseName { get; set; }
         public string? Description { get; set; }
 
         public string? CourseLogo { get; set; }

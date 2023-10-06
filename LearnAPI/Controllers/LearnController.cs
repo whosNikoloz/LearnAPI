@@ -162,17 +162,17 @@ namespace LearnAPI.Controllers
         }
 
         /// <summary>
-        /// ამოიღებს კონკრეტულ კურსს თავისი უნიკალური იდენტიფიკატორით.
+        /// ამოიღებს კონკრეტულ კურსს თავისი უნიკალური იდენტიფიკატორი
         /// </summary>
         /// <param name="courseid">კურსის უნიკალური იდენტიფიკატორი.</param>
-        [HttpGet("Course/{courseid}")]
-        public async Task<IActionResult> Course(int courseid)
+        [HttpGet("Course/{courseName}")]
+        public async Task<IActionResult> Course(string courseName)
         {
             var course = await _context.Courses
                 .Include(u => u.Level)
                 .Include(u => u.Subjects)
                 .Include(u => u.Enrollments)
-                .FirstOrDefaultAsync(u => u.CourseId == courseid);
+                .FirstOrDefaultAsync(u => u.FormattedCourseName == courseName);
 
             return Ok(course);
         }
@@ -200,6 +200,7 @@ namespace LearnAPI.Controllers
                 CourseName = newCourseModel.CourseName,
                 Description = newCourseModel.Description,
                 CourseLogo = newCourseModel.CourseLogo,
+                FormattedCourseName = newCourseModel.FormattedCourseName,
                 LevelId = newCourseModel.LevelId
             };
 
