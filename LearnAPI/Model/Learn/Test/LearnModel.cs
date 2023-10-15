@@ -19,12 +19,10 @@ namespace LearnAPI.Model.Learn.Test
         public int VideoId { get; set; }
         public virtual VideoModel Video { get; set; } = null!;
 
-        public virtual TestModel? Question { get; set; }
+        public int? TestId { get; set; }
 
-        public int SubjectId { get; set; }
-
-        [JsonIgnore]
-        public virtual SubjectModel? Subject { get; set; }
+        [ForeignKey("TestId")]
+        public virtual TestModel? Test { get; set; }
 
 
     }

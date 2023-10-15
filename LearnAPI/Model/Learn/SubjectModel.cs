@@ -21,7 +21,6 @@ namespace LearnAPI.Model.Learn
         [JsonIgnore]
         public virtual CourseModel? Course { get; set; }
 
-        public virtual ICollection<LearnModel> LearnMaterials { get; set; } = new List<LearnModel>();
-        public virtual ICollection<TestModel> Tests { get; set; } = new List<TestModel>();
+        public virtual ICollection<LessonModel> Lessons { get; set; } = new List<LessonModel>();
     }
 }

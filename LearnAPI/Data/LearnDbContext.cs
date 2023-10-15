@@ -26,19 +26,6 @@ namespace LearnAPI.Data
                 .HasOne(ce => ce.Course)
                 .WithMany(c => c.Enrollments)
                 .HasForeignKey(ce => ce.CourseId);
-
-            modelBuilder.Entity<TestModel>()
-                .HasOne(t => t.Subject)          // Specify the navigation property
-                .WithMany(s => s.Tests)          // Specify the collection navigation property in SubjectModel
-                .HasForeignKey(t => t.SubjectId) // Specify the foreign key property
-                .IsRequired();
-
-            modelBuilder.Entity<LearnModel>()
-                .HasOne(l => l.Subject)
-                .WithMany(s => s.LearnMaterials)
-                .HasForeignKey(l => l.SubjectId)
-                .OnDelete(DeleteBehavior.Restrict);
-
         }
 
         //user
@@ -60,7 +47,7 @@ namespace LearnAPI.Data
         public DbSet<CourseModel> Courses { get; set; }
         public DbSet<SubjectModel> Subjects { get; set; }
         public DbSet<CourseEnrollmentModel> CourseEnroll { get; set; }
-
+        public DbSet<LessonModel> Lessons { get; set; }
         public DbSet<LearnModel> Learn { get; set; }
         public DbSet<TestModel> Tests { get; set; }
         public DbSet<TestAnswerModel> TestAnswers { get; set; }

@@ -231,10 +231,10 @@ namespace LearnAPI.Controllers
 
 
 
-        // შედით ელექტრონული ფოსტით და პაროლით.
-        // POST api/Auth/Email
-        [HttpPost("Auth/CheckeMailExist/{email}")]
-        public async Task<IActionResult> CheckeMailExist(string email)
+        // შეამოწმებს თუ Oauth2 მომხმარებელი არსებობს.
+        // POST api/Auth/OAuth2Exist
+        [HttpPost("Auth/OAuth2Exist")]
+        public async Task<IActionResult> CheckeOatuh2Exist(CheckOauth2ExistsReqeust reqeust)
         {
 
             if (!ModelState.IsValid)
@@ -242,7 +242,8 @@ namespace LearnAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            var user = await _context.Users
+    .FirstOrDefaultAsync(u => u.OAuthProvider == reqeust.OAuthProvider && u.OAuthProviderId == reqeust.OAuthProviderId);
 
             if (user == null)
             {
@@ -280,7 +281,7 @@ namespace LearnAPI.Controllers
                 return BadRequest("Wrong password.");
             }
 
-            if (user.VerifiedAt == null)
+            if (user.VerifiedAt == DateTime.MinValue)
             {
                 return BadRequest("User not verified.");
             }

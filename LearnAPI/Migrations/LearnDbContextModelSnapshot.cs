@@ -68,6 +68,27 @@ namespace LearnAPI.Migrations
                     b.ToTable("Courses");
                 });
 
+            modelBuilder.Entity("LearnAPI.Model.Learn.LessonModel", b =>
+                {
+                    b.Property<int>("LessonId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("LessonId"));
+
+                    b.Property<string>("LessonName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("SubjectId")
+                        .HasColumnType("int");
+
+                    b.HasKey("LessonId");
+
+                    b.HasIndex("SubjectId");
+
+                    b.ToTable("Lessons");
+                });
+
             modelBuilder.Entity("LearnAPI.Model.Learn.LevelModel", b =>
                 {
                     b.Property<int>("LevelId")
@@ -167,7 +188,10 @@ namespace LearnAPI.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("SubjectId")
+                    b.Property<int?>("LessonModelLessonId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TestId")
                         .HasColumnType("int");
 
                     b.Property<int>("VideoId")
@@ -175,7 +199,9 @@ namespace LearnAPI.Migrations
 
                     b.HasKey("LearnId");
 
-                    b.HasIndex("SubjectId");
+                    b.HasIndex("LessonModelLessonId");
+
+                    b.HasIndex("TestId");
 
                     b.ToTable("Learn");
                 });
@@ -216,22 +242,16 @@ namespace LearnAPI.Migrations
                     b.Property<string>("Hint")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("LearnId")
+                    b.Property<int?>("LessonModelLessonId")
                         .HasColumnType("int");
 
                     b.Property<string>("Question")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("SubjectId")
-                        .HasColumnType("int");
-
                     b.HasKey("TestId");
 
-                    b.HasIndex("LearnId")
-                        .IsUnique();
-
-                    b.HasIndex("SubjectId");
+                    b.HasIndex("LessonModelLessonId");
 
                     b.ToTable("Tests");
                 });
@@ -468,6 +488,17 @@ namespace LearnAPI.Migrations
                     b.Navigation("Level");
                 });
 
+            modelBuilder.Entity("LearnAPI.Model.Learn.LessonModel", b =>
+                {
+                    b.HasOne("LearnAPI.Model.Learn.SubjectModel", "Subject")
+                        .WithMany("Lessons")
+                        .HasForeignKey("SubjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Subject");
+                });
+
             modelBuilder.Entity("LearnAPI.Model.Learn.ProgressModel", b =>
                 {
                     b.HasOne("LearnAPI.Model.Learn.LevelModel", "CurrentLevel")
@@ -510,13 +541,15 @@ namespace LearnAPI.Migrations
 
             modelBuilder.Entity("LearnAPI.Model.Learn.Test.LearnModel", b =>
                 {
-                    b.HasOne("LearnAPI.Model.Learn.SubjectModel", "Subject")
-                        .WithMany("LearnMaterials")
-                        .HasForeignKey("SubjectId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                    b.HasOne("LearnAPI.Model.Learn.LessonModel", null)
+                        .WithMany("LearnMaterial")
+                        .HasForeignKey("LessonModelLessonId");
 
-                    b.Navigation("Subject");
+                    b.HasOne("LearnAPI.Model.Learn.Test.TestModel", "Test")
+                        .WithMany()
+                        .HasForeignKey("TestId");
+
+                    b.Navigation("Test");
                 });
 
             modelBuilder.Entity("LearnAPI.Model.Learn.Test.TestAnswerModel", b =>
@@ -532,21 +565,9 @@ namespace LearnAPI.Migrations
 
             modelBuilder.Entity("LearnAPI.Model.Learn.Test.TestModel", b =>
                 {
-                    b.HasOne("LearnAPI.Model.Learn.Test.LearnModel", "Learn")
-                        .WithOne("Question")
-                        .HasForeignKey("LearnAPI.Model.Learn.Test.TestModel", "LearnId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("LearnAPI.Model.Learn.SubjectModel", "Subject")
+                    b.HasOne("LearnAPI.Model.Learn.LessonModel", null)
                         .WithMany("Tests")
-                        .HasForeignKey("SubjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Learn");
-
-                    b.Navigation("Subject");
+                        .HasForeignKey("LessonModelLessonId");
                 });
 
             modelBuilder.Entity("LearnAPI.Model.Learn.Test.VideoModel", b =>
@@ -600,6 +621,13 @@ namespace LearnAPI.Migrations
                     b.Navigation("Subjects");
                 });
 
+            modelBuilder.Entity("LearnAPI.Model.Learn.LessonModel", b =>
+                {
+                    b.Navigation("LearnMaterial");
+
+                    b.Navigation("Tests");
+                });
+
             modelBuilder.Entity("LearnAPI.Model.Learn.LevelModel", b =>
                 {
                     b.Navigation("Courses");
@@ -607,15 +635,11 @@ namespace LearnAPI.Migrations
 
             modelBuilder.Entity("LearnAPI.Model.Learn.SubjectModel", b =>
                 {
-                    b.Navigation("LearnMaterials");
-
-                    b.Navigation("Tests");
+                    b.Navigation("Lessons");
                 });
 
             modelBuilder.Entity("LearnAPI.Model.Learn.Test.LearnModel", b =>
                 {
-                    b.Navigation("Question");
-
                     b.Navigation("Video")
                         .IsRequired();
                 });

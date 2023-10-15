@@ -170,7 +170,7 @@ namespace LearnAPI.Controllers
         {
             var course = await _context.Courses
                 .Include(u => u.Level)
-                .Include(u => u.Subjects)
+                .Include(u => u.Subjects).ThenInclude(s => s.Lessons)
                 .Include(u => u.Enrollments)
                 .FirstOrDefaultAsync(u => u.FormattedCourseName == courseName);
 
@@ -289,8 +289,6 @@ namespace LearnAPI.Controllers
         {
 
             var subjects = await _context.Subjects
-                .Include(u => u.LearnMaterials)
-                .Include(u => u.Tests)
                 .Include(u => u.Course)
                 .ToListAsync();
 
@@ -305,10 +303,9 @@ namespace LearnAPI.Controllers
         public async Task<IActionResult> Subject(int subjectid)
         {
             var subject = await _context.Subjects
-                .Include(u => u.LearnMaterials)
-                .Include(u => u.Tests)
                 .Include(u => u.Course)
-                .FirstOrDefaultAsync(u => u.CourseId == subjectid);
+                .Include(u => u.Lessons)
+                .FirstOrDefaultAsync(u => u.SubjectId == subjectid);
 
             return Ok(subject);
         }
@@ -326,7 +323,7 @@ namespace LearnAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            var course = await _context.Courses.FirstOrDefaultAsync(u => u.CourseName == coursename);
+            var course = await _context.Courses.FirstOrDefaultAsync(u => u.FormattedCourseName == coursename);
 
             if (course == null)
             {
@@ -417,6 +414,142 @@ namespace LearnAPI.Controllers
             return Ok("Removed");
         }
 
+
+        // ---------- Lessons ----------
+
+        /// <summary>
+        /// ამოიღებს სწავლების სიას.
+        /// </summary>
+
+
+        [HttpGet("Lessons")]
+        public async Task<ActionResult<IEnumerable<LessonModel>>> Lessons()
+        {
+
+            var lessons = await _context.Lessons
+                .Include(u => u.Subject)
+                .Include(u => u.LearnMaterial)
+                .ToListAsync();
+
+            return Ok(lessons);
+        }
+
+        /// <summary>
+        /// ამოიღებს კონკრეტულ გაკვეთილის მისი უნიკალური იდენტიფიკატორის მიხედვით.
+        /// </summary>
+        /// <param name="lessonid">სუბიექტის უნიკალური იდენტიფიკატორი.</param>
+        [HttpGet("Lesson/{lessonid}")]
+        public async Task<IActionResult> Lesson(int lessonid)
+        {
+            var lesson = await _context.Lessons
+                .Include(u => u.Subject)
+                .Include(u => u.LearnMaterial)
+                .FirstOrDefaultAsync(u => u.LessonId == lessonid);
+
+            return Ok(lesson);
+        }
+
+        /// <summary>
+        /// ამატებს ახალ საგანს.
+        /// </summary>
+        /// <param name="newlesson">დამატებული ახალი გაკვეთილის ინფორმაცია.</param>
+        /// <param name="subjectname">თემის სახელწოდება, რომელსაც ეკუთვნის საგანი.</param>
+        [HttpPost("Lesson"), Authorize(Roles = "admin")]
+        public async Task<IActionResult> AddLesson(NewLessonModel newlesson, string subjectname)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var subject = await _context.Subjects.FirstOrDefaultAsync(u => u.SubjectName == subjectname);
+
+            if (subject == null)
+            {
+                return NotFound("Subject Not Found");
+            }
+
+            if (_context.Lessons.Any(u => u.LessonName == newlesson.LessonName && u.SubjectId == subject.SubjectId))
+            {
+                return BadRequest("Lesson Already Exists");
+            }
+
+            var lesson = new LessonModel
+            {
+                LessonName = newlesson.LessonName,
+                SubjectId = subject.SubjectId,
+            };
+
+            _context.Lessons.Add(lesson);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+
+            return Ok(lesson);
+        }
+
+        /// <summary>
+        /// არედაქტირებს არსებულ საგანს.
+        /// </summary>
+        /// <param name="newlesson">განახლებული ინფორმაცია გაკვეთილისთვის.</param>
+        /// <param name="lessonid">რედაქტირებადი საგნის უნიკალური იდენტიფიკატორი.</param>
+        [HttpPut("Lessons/{lessonid}")]
+        [Authorize(Roles = "admin")]
+        public async Task<IActionResult> EditLesson(NewLessonModel newlesson, int lessonid)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var lesson = await _context.Lessons.FirstOrDefaultAsync(u => u.LessonId == lessonid);
+
+            if (lesson == null)
+            {
+                return NotFound("Lesson Not Found");
+            }
+
+            lesson.LessonName = newlesson.LessonName;
+            lesson.SubjectId = lesson.SubjectId;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(lesson);
+        }
+
+        /// <summary>
+        /// შლის კონკრეტულ გაკვეთილს მისი უნიკალური იდენტიფიკატორის მიხედვით.
+        /// </summary>
+        /// <param name="lessonid">წაშლილი საგნის უნიკალური იდენტიფიკატორი.</param>
+        [HttpDelete("Lessons/{lesson}")]
+        [Authorize(Roles = "admin")]
+        public async Task<IActionResult> DeleteLesson(int lessonid)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var lesson = await _context.Lessons.FirstOrDefaultAsync(u => u.LessonId == lessonid);
+
+            if (lesson == null)
+            {
+                return NotFound("Lesson Not Found");
+            }
+
+            _context.Lessons.Remove(lesson);
+
+            await _context.SaveChangesAsync();
+
+            return Ok("Removed");
+        }
+
         // ---------- Tests ----------
 
         /// <summary>
@@ -456,7 +589,6 @@ namespace LearnAPI.Controllers
             {
                 Question = test.Question,
                 Hint = test.Hint,
-                SubjectId = test.SubjectId
             };
 
             _context.Tests.Add(Test);
@@ -590,7 +722,7 @@ namespace LearnAPI.Controllers
         [HttpGet("LearnMaterials")]
         public async Task<ActionResult<IEnumerable<LearnModel>>> GetLearns()
         {
-            return await _context.Learn.Include(t => t.Question).ToListAsync();
+            return await _context.Learn.Include(t => t.TestId).ToListAsync();
         }
 
         /// <summary>
@@ -600,7 +732,7 @@ namespace LearnAPI.Controllers
         [HttpGet("LearnMaterial/{id}")]
         public async Task<ActionResult<LearnModel>> GetLearn(int id)
         {
-            var learn = await _context.Learn.Include(t => t.Question).FirstOrDefaultAsync(t => t.LearnId == id);
+            var learn = await _context.Learn.Include(t => t.TestId).FirstOrDefaultAsync(t => t.LearnId == id);
 
             if (learn == null)
             {
@@ -642,7 +774,6 @@ namespace LearnAPI.Controllers
             {
                 LearnName = learn.LearnName,
                 Description = learn.Description,
-                SubjectId = subject.SubjectId,
                 VideoId = learn.VideoId
             };
 
