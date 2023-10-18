@@ -119,13 +119,13 @@ namespace LearnAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ProgressId"));
 
-                    b.Property<int?>("CurrentLevelId")
+                    b.Property<int>("CourseId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("LastCompletedCourseId")
+                    b.Property<int>("CurrentLessonId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("LastCompletedSubjectId")
+                    b.Property<int>("CurrentSubjectId")
                         .HasColumnType("int");
 
                     b.Property<int>("UserId")
@@ -133,14 +133,13 @@ namespace LearnAPI.Migrations
 
                     b.HasKey("ProgressId");
 
-                    b.HasIndex("CurrentLevelId");
+                    b.HasIndex("CourseId");
 
-                    b.HasIndex("LastCompletedCourseId");
+                    b.HasIndex("CurrentLessonId");
 
-                    b.HasIndex("LastCompletedSubjectId");
+                    b.HasIndex("CurrentSubjectId");
 
-                    b.HasIndex("UserId")
-                        .IsUnique();
+                    b.HasIndex("UserId");
 
                     b.ToTable("Progress");
                 });
@@ -242,16 +241,11 @@ namespace LearnAPI.Migrations
                     b.Property<string>("Hint")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("LessonModelLessonId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Question")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("TestId");
-
-                    b.HasIndex("LessonModelLessonId");
 
                     b.ToTable("Tests");
                 });
@@ -501,29 +495,35 @@ namespace LearnAPI.Migrations
 
             modelBuilder.Entity("LearnAPI.Model.Learn.ProgressModel", b =>
                 {
-                    b.HasOne("LearnAPI.Model.Learn.LevelModel", "CurrentLevel")
-                        .WithMany()
-                        .HasForeignKey("CurrentLevelId");
-
-                    b.HasOne("LearnAPI.Model.Learn.CourseModel", "LastCompletedCourse")
-                        .WithMany()
-                        .HasForeignKey("LastCompletedCourseId");
-
-                    b.HasOne("LearnAPI.Model.Learn.SubjectModel", "LastCompletedSubject")
-                        .WithMany()
-                        .HasForeignKey("LastCompletedSubjectId");
-
-                    b.HasOne("LearnAPI.Model.User.UserModel", "User")
-                        .WithOne("Progress")
-                        .HasForeignKey("LearnAPI.Model.Learn.ProgressModel", "UserId")
+                    b.HasOne("LearnAPI.Model.Learn.CourseModel", "Course")
+                        .WithMany("Progresses")
+                        .HasForeignKey("CourseId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("CurrentLevel");
+                    b.HasOne("LearnAPI.Model.Learn.LessonModel", "CurrentLesson")
+                        .WithMany("Progresses")
+                        .HasForeignKey("CurrentLessonId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
 
-                    b.Navigation("LastCompletedCourse");
+                    b.HasOne("LearnAPI.Model.Learn.SubjectModel", "CurrentSubject")
+                        .WithMany("Progresses")
+                        .HasForeignKey("CurrentSubjectId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
 
-                    b.Navigation("LastCompletedSubject");
+                    b.HasOne("LearnAPI.Model.User.UserModel", "User")
+                        .WithMany("Progresses")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Course");
+
+                    b.Navigation("CurrentLesson");
+
+                    b.Navigation("CurrentSubject");
 
                     b.Navigation("User");
                 });
@@ -561,13 +561,6 @@ namespace LearnAPI.Migrations
                         .IsRequired();
 
                     b.Navigation("Test");
-                });
-
-            modelBuilder.Entity("LearnAPI.Model.Learn.Test.TestModel", b =>
-                {
-                    b.HasOne("LearnAPI.Model.Learn.LessonModel", null)
-                        .WithMany("Tests")
-                        .HasForeignKey("LessonModelLessonId");
                 });
 
             modelBuilder.Entity("LearnAPI.Model.Learn.Test.VideoModel", b =>
@@ -618,6 +611,8 @@ namespace LearnAPI.Migrations
                 {
                     b.Navigation("Enrollments");
 
+                    b.Navigation("Progresses");
+
                     b.Navigation("Subjects");
                 });
 
@@ -625,7 +620,7 @@ namespace LearnAPI.Migrations
                 {
                     b.Navigation("LearnMaterial");
 
-                    b.Navigation("Tests");
+                    b.Navigation("Progresses");
                 });
 
             modelBuilder.Entity("LearnAPI.Model.Learn.LevelModel", b =>
@@ -636,6 +631,8 @@ namespace LearnAPI.Migrations
             modelBuilder.Entity("LearnAPI.Model.Learn.SubjectModel", b =>
                 {
                     b.Navigation("Lessons");
+
+                    b.Navigation("Progresses");
                 });
 
             modelBuilder.Entity("LearnAPI.Model.Learn.Test.LearnModel", b =>
@@ -664,7 +661,7 @@ namespace LearnAPI.Migrations
 
                     b.Navigation("Posts");
 
-                    b.Navigation("Progress");
+                    b.Navigation("Progresses");
                 });
 #pragma warning restore 612, 618
         }

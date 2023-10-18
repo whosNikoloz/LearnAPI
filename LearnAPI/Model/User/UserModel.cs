@@ -56,7 +56,7 @@ namespace LearnAPI.Model.User
 
         //Progress
 
-        public virtual ProgressModel? Progress { get; set; }
+        public virtual ICollection<ProgressModel>? Progresses { get; set; }
         public DateTime LastActivity { get; set; }
 
     }

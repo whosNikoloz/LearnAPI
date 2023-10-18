@@ -1,4 +1,5 @@
 ﻿using LearnAPI.Model.User;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
 namespace LearnAPI.Model.Learn

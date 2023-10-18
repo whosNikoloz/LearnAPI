@@ -1,4 +1,5 @@
 ﻿using LearnAPI.Model.User;
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
@@ -21,9 +22,12 @@ namespace LearnAPI.Model.Learn
 
         [JsonIgnore]
 
-        public virtual LevelModel? Level { get; set; }
+        public virtual LevelModel Level { get; set; }
 
-        public virtual ICollection<SubjectModel>? Subjects { get; set; }
+        public virtual ICollection<SubjectModel> Subjects { get; set; }
+
+        [JsonIgnore]
+        public virtual ICollection<ProgressModel> Progresses { get; set; } = new List<ProgressModel>();
 
         public virtual ICollection<CourseEnrollmentModel> Enrollments { get; set; } = new List<CourseEnrollmentModel>();
     }

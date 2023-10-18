@@ -58,7 +58,7 @@ namespace LearnAPI.Controllers
                 .Include(u => u.Notifications)
                 .Include(u => u.Posts)
                 .Include(u => u.Comments)
-                .Include(u => u.Progress)
+                .Include(u => u.Progresses)
                 .FirstOrDefaultAsync(u => u.UserName == username);
 
             if (user == null)
@@ -193,7 +193,7 @@ namespace LearnAPI.Controllers
                 .Include(u => u.Notifications.OrderByDescending(n => n.CreatedAt)) // Order notifications by createdAt in descending order
                 .Include(u => u.Posts)
                 .Include(u => u.Comments)
-                .Include(u => u.Progress)
+                .Include(u => u.Progresses)
                 .FirstOrDefaultAsync(u => u.OAuthProvider == request.OAuthProvider && u.OAuthProviderId == request.OAuthProviderId); // Fix the comparison here
 
             if (user == null)
@@ -268,7 +268,7 @@ namespace LearnAPI.Controllers
                 .Include(u => u.Notifications.OrderByDescending(n => n.CreatedAt)) // Order notifications by createdAt in descending order
                 .Include(u => u.Posts)
                 .Include(u => u.Comments)
-                .Include(u => u.Progress)
+                .Include(u => u.Progresses)
                 .FirstOrDefaultAsync(u => u.Email == request.Email);
 
             if (user == null)
@@ -324,7 +324,7 @@ namespace LearnAPI.Controllers
                 .Include(u => u.Notifications)
                 .Include(u => u.Posts)
                 .Include(u => u.Comments)
-                .Include(u => u.Progress)
+                .Include(u => u.Progresses)
                 .FirstOrDefaultAsync(u => u.UserName == request.UserName);
 
             if (user == null)
@@ -363,7 +363,7 @@ namespace LearnAPI.Controllers
                 .Include(u => u.Notifications)
                 .Include(u => u.Posts)
                 .Include(u => u.Comments)
-                .Include(u => u.Progress)
+                .Include(u => u.Progresses)
                 .FirstOrDefaultAsync(u => u.PhoneNumber == request.PhoneNumber);
 
             if (user == null)

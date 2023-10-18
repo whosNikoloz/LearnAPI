@@ -3,6 +3,8 @@ using LearnAPI.Model.Learn.Test;
 using LearnAPI.Model.Social;
 using LearnAPI.Model.User;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Diagnostics;
 
 namespace LearnAPI.Data
 {
@@ -14,19 +16,55 @@ namespace LearnAPI.Data
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // User and Course Enrollment
             modelBuilder.Entity<CourseEnrollmentModel>()
-                .HasKey(ce => new { ce.UserId, ce.CourseId }); // Configure composite primary key
+                .HasKey(ce => new { ce.UserId, ce.CourseId });
 
             modelBuilder.Entity<CourseEnrollmentModel>()
                 .HasOne(ce => ce.User)
                 .WithMany(u => u.Enrollments)
-                .HasForeignKey(ce => ce.UserId); // Configure the User navigation property
+                .HasForeignKey(ce => ce.UserId);
 
             modelBuilder.Entity<CourseEnrollmentModel>()
                 .HasOne(ce => ce.Course)
                 .WithMany(c => c.Enrollments)
                 .HasForeignKey(ce => ce.CourseId);
+
+            modelBuilder.Entity<SubjectModel>()
+                .HasOne(s => s.Course)
+                .WithMany(c => c.Subjects)
+                .HasForeignKey(s => s.CourseId);
+
+            modelBuilder.Entity<LessonModel>()
+                .HasOne(l => l.Subject)
+                .WithMany(s => s.Lessons)
+                .HasForeignKey(l => l.SubjectId);
+
+            modelBuilder.Entity<ProgressModel>()
+                .HasOne(p => p.User)
+                .WithMany(u => u.Progresses)
+                .HasForeignKey(p => p.UserId)
+                .OnDelete(DeleteBehavior.Restrict); // Restrict cascading deletes
+
+            modelBuilder.Entity<ProgressModel>()
+                .HasOne(p => p.Course)
+                .WithMany(c => c.Progresses)
+                .HasForeignKey(p => p.CourseId)
+                .OnDelete(DeleteBehavior.Restrict); // Restrict cascading deletes
+
+            modelBuilder.Entity<ProgressModel>()
+                .HasOne(p => p.CurrentSubject)
+                .WithMany()
+                .HasForeignKey(p => p.CurrentSubjectId)
+                .OnDelete(DeleteBehavior.Restrict); // Restrict cascading deletes
+
+            modelBuilder.Entity<ProgressModel>()
+                .HasOne(p => p.CurrentLesson)
+                .WithMany()
+                .HasForeignKey(p => p.CurrentLessonId)
+                .OnDelete(DeleteBehavior.Restrict); // Restrict cascading deletes
         }
+
 
         //user
 
