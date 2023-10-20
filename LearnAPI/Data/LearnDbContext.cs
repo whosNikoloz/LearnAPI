@@ -30,39 +30,18 @@ namespace LearnAPI.Data
                 .WithMany(c => c.Enrollments)
                 .HasForeignKey(ce => ce.CourseId);
 
-            modelBuilder.Entity<SubjectModel>()
-                .HasOne(s => s.Course)
-                .WithMany(c => c.Subjects)
-                .HasForeignKey(s => s.CourseId);
-
-            modelBuilder.Entity<LessonModel>()
-                .HasOne(l => l.Subject)
-                .WithMany(s => s.Lessons)
-                .HasForeignKey(l => l.SubjectId);
-
             modelBuilder.Entity<ProgressModel>()
-                .HasOne(p => p.User)
-                .WithMany(u => u.Progresses)
-                .HasForeignKey(p => p.UserId)
-                .OnDelete(DeleteBehavior.Restrict); // Restrict cascading deletes
-
-            modelBuilder.Entity<ProgressModel>()
-                .HasOne(p => p.Course)
-                .WithMany(c => c.Progresses)
-                .HasForeignKey(p => p.CourseId)
-                .OnDelete(DeleteBehavior.Restrict); // Restrict cascading deletes
-
-            modelBuilder.Entity<ProgressModel>()
-                .HasOne(p => p.CurrentSubject)
+                .HasOne(p => p.Lesson)
                 .WithMany()
-                .HasForeignKey(p => p.CurrentSubjectId)
-                .OnDelete(DeleteBehavior.Restrict); // Restrict cascading deletes
+                .HasForeignKey(p => p.LessonId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<ProgressModel>()
-                .HasOne(p => p.CurrentLesson)
+                .HasOne(p => p.Subject)
                 .WithMany()
-                .HasForeignKey(p => p.CurrentLessonId)
-                .OnDelete(DeleteBehavior.Restrict); // Restrict cascading deletes
+                .HasForeignKey(p => p.SubjectId)
+                .OnDelete(DeleteBehavior.Restrict);
+
         }
 
 

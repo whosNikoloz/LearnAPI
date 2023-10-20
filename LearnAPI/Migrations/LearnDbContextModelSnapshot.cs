@@ -122,10 +122,10 @@ namespace LearnAPI.Migrations
                     b.Property<int>("CourseId")
                         .HasColumnType("int");
 
-                    b.Property<int>("CurrentLessonId")
+                    b.Property<int>("LessonId")
                         .HasColumnType("int");
 
-                    b.Property<int>("CurrentSubjectId")
+                    b.Property<int>("SubjectId")
                         .HasColumnType("int");
 
                     b.Property<int>("UserId")
@@ -135,9 +135,9 @@ namespace LearnAPI.Migrations
 
                     b.HasIndex("CourseId");
 
-                    b.HasIndex("CurrentLessonId");
+                    b.HasIndex("LessonId");
 
-                    b.HasIndex("CurrentSubjectId");
+                    b.HasIndex("SubjectId");
 
                     b.HasIndex("UserId");
 
@@ -501,16 +501,16 @@ namespace LearnAPI.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("LearnAPI.Model.Learn.LessonModel", "CurrentLesson")
-                        .WithMany("Progresses")
-                        .HasForeignKey("CurrentLessonId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                    b.HasOne("LearnAPI.Model.Learn.LessonModel", "Lesson")
+                        .WithMany()
+                        .HasForeignKey("LessonId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("LearnAPI.Model.Learn.SubjectModel", "CurrentSubject")
-                        .WithMany("Progresses")
-                        .HasForeignKey("CurrentSubjectId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                    b.HasOne("LearnAPI.Model.Learn.SubjectModel", "Subject")
+                        .WithMany()
+                        .HasForeignKey("SubjectId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("LearnAPI.Model.User.UserModel", "User")
@@ -521,9 +521,9 @@ namespace LearnAPI.Migrations
 
                     b.Navigation("Course");
 
-                    b.Navigation("CurrentLesson");
+                    b.Navigation("Lesson");
 
-                    b.Navigation("CurrentSubject");
+                    b.Navigation("Subject");
 
                     b.Navigation("User");
                 });
@@ -619,8 +619,6 @@ namespace LearnAPI.Migrations
             modelBuilder.Entity("LearnAPI.Model.Learn.LessonModel", b =>
                 {
                     b.Navigation("LearnMaterial");
-
-                    b.Navigation("Progresses");
                 });
 
             modelBuilder.Entity("LearnAPI.Model.Learn.LevelModel", b =>
@@ -631,8 +629,6 @@ namespace LearnAPI.Migrations
             modelBuilder.Entity("LearnAPI.Model.Learn.SubjectModel", b =>
                 {
                     b.Navigation("Lessons");
-
-                    b.Navigation("Progresses");
                 });
 
             modelBuilder.Entity("LearnAPI.Model.Learn.Test.LearnModel", b =>

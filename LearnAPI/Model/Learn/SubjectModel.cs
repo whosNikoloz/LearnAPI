@@ -23,6 +23,5 @@ namespace LearnAPI.Model.Learn
         public virtual CourseModel Course { get; set; }
 
         public virtual ICollection<LessonModel> Lessons { get; set; } = new List<LessonModel>();
-        public virtual ICollection<ProgressModel> Progresses { get; set; } = new List<ProgressModel>();
     }
 }

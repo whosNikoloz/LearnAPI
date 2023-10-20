@@ -11,17 +11,13 @@ namespace LearnAPI.Model.Learn
         [Key]
         public int ProgressId { get; set; }
 
-        [ForeignKey("UserId")]
         public int UserId { get; set; }
 
-        [ForeignKey("CourseId")]
         public int CourseId { get; set; }
 
-        [ForeignKey("CurrentSubjectId")]
-        public int CurrentSubjectId { get; set; }
+        public int SubjectId { get; set; }
 
-        [ForeignKey("CurrentLessonId")]
-        public int CurrentLessonId { get; set; }
+        public int LessonId { get; set; }
 
         [JsonIgnore]
         public virtual UserModel? User { get; set; }
@@ -30,9 +26,9 @@ namespace LearnAPI.Model.Learn
         public virtual CourseModel? Course { get; set; }
 
         [JsonIgnore]
-        public virtual SubjectModel? CurrentSubject { get; set; }
+        public virtual SubjectModel? Subject { get; set; }
 
         [JsonIgnore]
-        public virtual LessonModel? CurrentLesson { get; set; }
+        public virtual LessonModel? Lesson { get; set; }
     }
 }
