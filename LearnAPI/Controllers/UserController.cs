@@ -137,7 +137,8 @@ namespace LearnAPI.Controllers
             // Create a new user record
             var user = new UserModel
             {
-                Email = request.email,
+                Email = "OAuth",
+                OAuthEmail = request.email,
                 UserName = request.username,
                 FirstName = request.firstName,
                 LastName = request.lastName,
@@ -148,14 +149,21 @@ namespace LearnAPI.Controllers
                 VerificationToken = CreateRandomToken()
             };
 
-            // Set user role and other properties as needed
-            user.Role = "user"; // Assign "user" role
+            if (!_context.Users.Any())
+            {
+                user.Role = "admin"; // Assign "admin" role
+                
+            }
+            else
+            {
+                user.Role = "user"; // Assign "user" role
+            }
+
+            user.VerifiedAt = DateTime.Now;
 
             // Save the new user to the database
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
-
-            // Generate a verification link and send a verification email if needed
 
             return Ok("OAuth2 User successfully registered.");
         }
@@ -218,7 +226,7 @@ namespace LearnAPI.Controllers
                     userName = user.UserName,
                     firstName = user.FirstName,
                     lastName = user.LastName,
-                    email = user.Email,
+                    email = user.OAuthEmail,
                     phoneNumber = user.PhoneNumber,
                     picture = user.Picture,
                     notification = user.Notifications

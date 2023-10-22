@@ -19,6 +19,9 @@ namespace LearnAPI.Model.User
         [EmailAddress]
         public string? Email { get; set; }
 
+        [EmailAddress]
+        public string? OAuthEmail { get; set; }
+
         [Phone]
         public string? PhoneNumber { get; set; }
 
