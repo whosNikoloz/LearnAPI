@@ -99,12 +99,12 @@ namespace LearnAPI.Controllers
             if (!_context.Users.Any())
             {
                 user.Role = "admin"; // Assign "admin" role
-                user.VerifiedAt = DateTime.Now;
             }
             else
             {
                 user.Role = "user"; // Assign "user" role
             }
+
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
