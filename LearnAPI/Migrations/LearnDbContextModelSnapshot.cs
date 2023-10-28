@@ -187,7 +187,7 @@ namespace LearnAPI.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("LessonModelLessonId")
+                    b.Property<int>("LessonId")
                         .HasColumnType("int");
 
                     b.Property<int?>("TestId")
@@ -198,9 +198,11 @@ namespace LearnAPI.Migrations
 
                     b.HasKey("LearnId");
 
-                    b.HasIndex("LessonModelLessonId");
+                    b.HasIndex("LessonId");
 
-                    b.HasIndex("TestId");
+                    b.HasIndex("TestId")
+                        .IsUnique()
+                        .HasFilter("[TestId] IS NOT NULL");
 
                     b.ToTable("Learn");
                 });
@@ -240,6 +242,9 @@ namespace LearnAPI.Migrations
 
                     b.Property<string>("Hint")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("LearnId")
+                        .HasColumnType("int");
 
                     b.Property<string>("Question")
                         .IsRequired()
@@ -544,13 +549,17 @@ namespace LearnAPI.Migrations
 
             modelBuilder.Entity("LearnAPI.Model.Learn.Test.LearnModel", b =>
                 {
-                    b.HasOne("LearnAPI.Model.Learn.LessonModel", null)
+                    b.HasOne("LearnAPI.Model.Learn.LessonModel", "Lesson")
                         .WithMany("LearnMaterial")
-                        .HasForeignKey("LessonModelLessonId");
+                        .HasForeignKey("LessonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("LearnAPI.Model.Learn.Test.TestModel", "Test")
-                        .WithMany()
-                        .HasForeignKey("TestId");
+                        .WithOne("Learn")
+                        .HasForeignKey("LearnAPI.Model.Learn.Test.LearnModel", "TestId");
+
+                    b.Navigation("Lesson");
 
                     b.Navigation("Test");
                 });
@@ -643,6 +652,8 @@ namespace LearnAPI.Migrations
             modelBuilder.Entity("LearnAPI.Model.Learn.Test.TestModel", b =>
                 {
                     b.Navigation("Answers");
+
+                    b.Navigation("Learn");
                 });
 
             modelBuilder.Entity("LearnAPI.Model.Social.PostModel", b =>

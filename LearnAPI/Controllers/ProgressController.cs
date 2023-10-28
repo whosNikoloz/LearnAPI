@@ -57,9 +57,9 @@ namespace LearnAPI.Controllers
             
             var response = new
             {
-                pregressid = progress.ProgressId,
-                subjectid = progress.SubjectId,
-                lessonid = progress.LessonId,
+                progressId = progress.ProgressId,
+                subjectId = progress.SubjectId,
+                lessonId = progress.LessonId,
             };
 
             return Ok(response);

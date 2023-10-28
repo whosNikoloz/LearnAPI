@@ -42,6 +42,10 @@ namespace LearnAPI.Data
                 .HasForeignKey(p => p.SubjectId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<LearnModel>()
+                .HasOne(learn => learn.Test)        
+                .WithOne(test => test.Learn)       
+                .HasForeignKey<LearnModel>(learn => learn.TestId);
         }
 
 

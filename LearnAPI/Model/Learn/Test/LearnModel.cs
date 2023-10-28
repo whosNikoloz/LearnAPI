@@ -21,8 +21,13 @@ namespace LearnAPI.Model.Learn.Test
 
         public int? TestId { get; set; }
 
-        [ForeignKey("TestId")]
+        [JsonIgnore]
         public virtual TestModel? Test { get; set; }
+
+        public int LessonId { get; set; }
+
+        [JsonIgnore]
+        public virtual LessonModel? Lesson { get; set; }
 
 
     }
