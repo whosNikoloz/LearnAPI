@@ -16,7 +16,7 @@ namespace LearnAPI.Model.Learn.Test
 
         public string? Description { get; set; }
 
-        [ForeignKey("LevelId")]
+        [ForeignKey("LearnId")]
         public virtual LearnModel? Learn { get; set; }
     }
 }

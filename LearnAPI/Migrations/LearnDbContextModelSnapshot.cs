@@ -179,7 +179,10 @@ namespace LearnAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("LearnId"));
 
-                    b.Property<string>("Description")
+                    b.Property<string>("Code")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -240,7 +243,14 @@ namespace LearnAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TestId"));
 
+                    b.Property<string>("Code")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Hint")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Instruction")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("LearnId")
@@ -266,7 +276,7 @@ namespace LearnAPI.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("LevelId")
+                    b.Property<int?>("LearnId")
                         .HasColumnType("int");
 
                     b.Property<string>("VideName")
@@ -279,9 +289,9 @@ namespace LearnAPI.Migrations
 
                     b.HasKey("VideoId");
 
-                    b.HasIndex("LevelId")
+                    b.HasIndex("LearnId")
                         .IsUnique()
-                        .HasFilter("[LevelId] IS NOT NULL");
+                        .HasFilter("[LearnId] IS NOT NULL");
 
                     b.ToTable("Videos");
                 });
@@ -579,7 +589,7 @@ namespace LearnAPI.Migrations
                 {
                     b.HasOne("LearnAPI.Model.Learn.Test.LearnModel", "Learn")
                         .WithOne("Video")
-                        .HasForeignKey("LearnAPI.Model.Learn.Test.VideoModel", "LevelId");
+                        .HasForeignKey("LearnAPI.Model.Learn.Test.VideoModel", "LearnId");
 
                     b.Navigation("Learn");
                 });

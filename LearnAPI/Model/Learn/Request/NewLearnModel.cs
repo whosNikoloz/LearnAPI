@@ -9,8 +9,9 @@ namespace LearnAPI.Model.Learn.Request
         public string? LearnName { get; set; }
 
         [Required]
-        public string? Description { get; set; }
+        public string? Content { get; set; }
 
-        public int VideoId { get; set; }
+        public string? Code { get; set; }
+
     }
 }

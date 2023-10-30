@@ -12,16 +12,16 @@ namespace LearnAPI.Model.Learn.Test
         [Required]
         public string? LearnName { get; set; }
 
-        [Required]
-        public string? Description { get; set; }
+        [Required] 
+        public string? Content { get; set; }
 
+        public string? Code { get; set; }
 
         public int VideoId { get; set; }
         public virtual VideoModel Video { get; set; } = null!;
 
         public int? TestId { get; set; }
 
-        [JsonIgnore]
         public virtual TestModel? Test { get; set; }
 
         public int LessonId { get; set; }

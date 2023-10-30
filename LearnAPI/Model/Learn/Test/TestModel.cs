@@ -9,10 +9,13 @@ namespace LearnAPI.Model.Learn.Test
         [Key]
         public int TestId { get; set; }
 
+        [Required]
+        public string? Instruction { get; set; }
 
         [Required]
         public string? Question { get; set; }
 
+        public string? Code { get; set; }
 
         public string? Hint { get; set; }
 

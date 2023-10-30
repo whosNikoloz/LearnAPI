@@ -444,6 +444,8 @@ namespace LearnAPI.Controllers
             var lesson = await _context.Lessons
                 .Include(u => u.Subject)
                 .Include(u => u.LearnMaterial)
+                 .ThenInclude(t => t.Test)
+                    .ThenInclude(t => t.Answers)
                 .FirstOrDefaultAsync(u => u.LessonId == lessonid);
 
             return Ok(lesson);
@@ -568,6 +570,11 @@ namespace LearnAPI.Controllers
         [HttpGet("Tests/{id}")]
         public async Task<ActionResult<TestModel>> GetTest(int id)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             var test = await _context.Tests.Include(t => t.Answers).FirstOrDefaultAsync(t => t.TestId == id);
 
             if (test == null)
@@ -582,19 +589,41 @@ namespace LearnAPI.Controllers
         /// ამატებს ახალ ტესტს.
         /// </summary>
         /// <param name="test">დამატებული ახალი ტესტის ინფორმაცია.</param>
-        [HttpPost("Tests"), Authorize(Roles ="admin")]
-        public async Task<ActionResult<TestModel>> PostTest(NewTestModel test)
+        [HttpPost("Tests/{LearnId}"), Authorize(Roles ="admin")]
+        public async Task<ActionResult<TestModel>> PostTest(NewTestModel test , int LearnId)
         {
-            var Test = new TestModel
+            if (!ModelState.IsValid)
             {
+                return BadRequest(ModelState);
+            }
+
+            var learn = await _context.Learn.FirstOrDefaultAsync(u => u.LearnId == LearnId);
+
+            if (learn == null)
+            {
+                return NotFound("Learn not found");
+            }
+
+            var testModel = new TestModel
+            {
+                Instruction = test.Instruction,
+                Code = test.Code,
                 Question = test.Question,
                 Hint = test.Hint,
+                LearnId = learn.LearnId,
             };
 
-            _context.Tests.Add(Test);
+            _context.Tests.Add(testModel);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetTest), new { id = Test.TestId }, Test);
+            // Set the Learn's TestId to the newly created test's ID
+            learn.TestId = testModel.TestId;
+
+            // Update the Learn entity with the TestId change
+            _context.Learn.Update(learn);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction("GetTest", new { id = testModel.TestId }, testModel);
         }
 
         /// <summary>
@@ -605,6 +634,10 @@ namespace LearnAPI.Controllers
         [HttpPut("Tests/{id}"), Authorize(Roles ="admin")]
         public async Task<IActionResult> PutTest(int id, TestModel test)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             if (id != test.TestId)
             {
                 return BadRequest();
@@ -623,6 +656,10 @@ namespace LearnAPI.Controllers
         [HttpDelete("Tests/{id}"), Authorize(Roles = "admin")]
         public async Task<IActionResult> DeleteTest(int id)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             var test = await _context.Tests.FindAsync(id);
 
             if (test == null)
@@ -639,27 +676,42 @@ namespace LearnAPI.Controllers
         // ---------- Answers ----------
 
         /// <summary>
-        /// ამოიღებს პასუხებს კონკრეტული ტესტისთვის მისი უნიკალური იდენტიფიკატორის მიხედვით.
+        /// Retrieves answers for a specific test based on its unique identifier.
         /// </summary>
-        /// <param name="testId">ტესტის უნიკალური იდენტიფიკატორი.</param>
+        /// <param name="testId">The unique identifier of the test.</param>
         [HttpGet("answers/{testid}")]
         public async Task<ActionResult<TestModel>> GetAnswers(int testId)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             var test = await _context.Tests
                 .Include(t => t.Answers)
                 .FirstOrDefaultAsync(t => t.TestId == testId);
+
+            if (test == null)
+            {
+                return NotFound();
+            }
 
             return CreatedAtAction(nameof(GetTest), new { id = test.TestId }, test);
         }
 
         /// <summary>
-        /// ამატებს პასუხს კონკრეტულ ტესტზე.
+        /// Adds an answer to a specific test.
         /// </summary>
-        /// <param name="testId">ტესტის უნიკალური იდენტიფიკატორი.</param>
-        /// <param name="answer">დამატებული პასუხის ინფორმაცია.</param>
+        /// <param name="testId">The unique identifier of the test.</param>
+        /// <param name="answer">The information of the added answer.</param>
         [HttpPost("{testId}/answers"), Authorize(Roles = "admin")]
         public async Task<ActionResult<TestModel>> AddAnswerToTest(int testId, NewTestAnswerModel answer)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             var test = await _context.Tests
                 .Include(t => t.Answers)
                 .FirstOrDefaultAsync(t => t.TestId == testId);
@@ -697,12 +749,17 @@ namespace LearnAPI.Controllers
         }
 
         /// <summary>
-        /// შლის კონკრეტულ პასუხს მისი უნიკალური იდენტიფიკატორის მიხედვით.
+        /// Deletes a specific answer based on its unique identifier.
         /// </summary>
-        /// <param name="answerid">წაშლილი პასუხის უნიკალური იდენტიფიკატორი.</param>
+        /// <param name="answerid">The unique identifier of the deleted answer.</param>
         [HttpDelete("answers/{answerid}"), Authorize(Roles = "admin")]
         public async Task<IActionResult> DeleteAnswers(int answerid)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             var answer = await _context.TestAnswers
                 .FirstOrDefaultAsync(t => t.AnswerId == answerid);
 
@@ -711,7 +768,19 @@ namespace LearnAPI.Controllers
                 return NotFound();
             }
 
-            return Ok("Deleted");
+            _context.TestAnswers.Remove(answer);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                return Ok("Deleted");
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                // Log the exception or handle it in a way that makes sense for your application
+                // You might inform the user about the concurrency issue and prompt for action
+                return BadRequest(ex.Message);
+            }
         }
 
         // ---------- Learn Materials ----------
@@ -722,8 +791,37 @@ namespace LearnAPI.Controllers
         [HttpGet("LearnMaterials")]
         public async Task<ActionResult<IEnumerable<LearnModel>>> GetLearns()
         {
-            return await _context.Learn.Include(t => t.TestId).ToListAsync();
+            return await _context.Learn.Include(t => t.Test).ThenInclude(t => t.Answers).ToListAsync();
         }
+
+
+        /// <summary>
+        /// ამოიღებს კონკრეტულ სასწავლო მასალას მისი უნიკალური იდენტიფიკატორით.
+        /// </summary>
+        /// <param name="id">სასწავლო მასალის უნიკალური იდენტიფიკატორი.</param>
+        [HttpGet("LearnMaterialByLesson/{LessonId}")]
+        public async Task<ActionResult> GetLearnmaterial(int LessonId)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var lessons = await _context.Learn
+                .Include(t => t.Test)
+                    .ThenInclude(t => t.Answers) // Include Answers
+                .Where(t => t.LessonId == LessonId)
+                .ToListAsync();
+
+            if (lessons == null || lessons.Count == 0)
+            {
+                return NotFound();
+            }
+
+            return Ok(lessons);
+        }
+
+
 
         /// <summary>
         /// ამოიღებს კონკრეტულ სასწავლო მასალას მისი უნიკალური იდენტიფიკატორით.
@@ -732,7 +830,15 @@ namespace LearnAPI.Controllers
         [HttpGet("LearnMaterial/{id}")]
         public async Task<ActionResult<LearnModel>> GetLearn(int id)
         {
-            var learn = await _context.Learn.Include(t => t.TestId).FirstOrDefaultAsync(t => t.LearnId == id);
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var learn = await _context.Learn
+                .Include(t => t.Test)
+                    .ThenInclude(t => t.Answers) // Include Answers
+                .FirstOrDefaultAsync(t => t.LearnId == id);
 
             if (learn == null)
             {
@@ -749,32 +855,31 @@ namespace LearnAPI.Controllers
         /// <param name="subjectname">საგნის სახელწოდება, რომელსაც მიეკუთვნება სასწავლო მასალა.</param>
         /// <param name="coursename">კურსის სახელწოდება, რომელსაც მიეკუთვნება სასწავლო მასალა.</param>
         [HttpPost("LearnMaterial"), Authorize(Roles = "admin")]
-        public async Task<IActionResult> PostLearn(NewLearnModel learn, string subjectname, string coursename)
+        public async Task<IActionResult> PostLearn(NewLearnModel learn, int LessonId)
         {
-            var course = await _context.Courses.FirstOrDefaultAsync(u => u.CourseName == coursename);
-
-            if (course == null)
+            if (!ModelState.IsValid)
             {
-                return NotFound();
+                return BadRequest(ModelState);
             }
 
-            var subject = await _context.Subjects.FirstOrDefaultAsync(u => u.SubjectName == subjectname && u.CourseId == course.CourseId);
+            var lesson = await _context.Lessons.FirstOrDefaultAsync(u => u.LessonId == LessonId);
 
-            if (subject == null)
+            if (lesson == null)
             {
                 return NotFound();
             }
 
             if (_context.Learn.Any(u => u.LearnName == learn.LearnName))
             {
-                return BadRequest("Learn Already Exists");
+                return BadRequest("LearnMaterial Already Exists");
             }
 
             var Learn = new LearnModel
             {
                 LearnName = learn.LearnName,
-                Description = learn.Description,
-                VideoId = learn.VideoId
+                Content = learn.Content,
+                Code = learn.Code,
+                LessonId = lesson.LessonId,
             };
 
             _context.Learn.Add(Learn);
@@ -791,6 +896,11 @@ namespace LearnAPI.Controllers
         [HttpPut("LearnMaterial/{id}"), Authorize(Roles = "admin")]
         public async Task<IActionResult> PutLearn(int id, LearnModel learn)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             if (id != learn.LearnId)
             {
                 return BadRequest();
@@ -809,6 +919,11 @@ namespace LearnAPI.Controllers
         [HttpDelete("LearnMaterial/{id}"), Authorize(Roles = "admin")]
         public async Task<IActionResult> DeleteLearn(int id)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             var learn = await _context.Learn.FindAsync(id);
 
             if (learn == null)

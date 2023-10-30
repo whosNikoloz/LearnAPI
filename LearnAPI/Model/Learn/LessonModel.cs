@@ -16,7 +16,6 @@ namespace LearnAPI.Model.Learn
         [JsonIgnore]
         public virtual SubjectModel? Subject { get; set; }
 
-        [JsonIgnore]
         public virtual ICollection<LearnModel> LearnMaterial { get; set; } = new List<LearnModel>();
     }
 }

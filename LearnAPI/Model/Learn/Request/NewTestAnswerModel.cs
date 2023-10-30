@@ -11,9 +11,5 @@ namespace LearnAPI.Model.Learn.Request
         public string Option { get; set; }
 
         public bool IsCorrect { get; set; }
-
-        // Foreign Key
-        public int TestId { get; set; }
-
     }
 }
