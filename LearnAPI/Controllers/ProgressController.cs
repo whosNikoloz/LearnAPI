@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
+using System;
 using System.Security.Claims;
 
 namespace LearnAPI.Controllers
@@ -33,37 +34,74 @@ namespace LearnAPI.Controllers
             }
 
             var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == request.UserId);
-            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value; //JWT id ჩეკავს
-            var JWTRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value; //JWT Role
+            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value; // JWT id check
+            var JWTRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value; // JWT Role
 
             if (user == null)
             {
-                return BadRequest("user not found.");
+                return BadRequest("User not found.");
             }
+
             if (userId != user.UserId.ToString())
             {
                 if (JWTRole != "admin")
                 {
-                    return BadRequest("Authorize invalid");
+                    return BadRequest("Unauthorized");
                 }
             }
 
             var progress = await _context.Progress.FirstOrDefaultAsync(u => u.UserId == user.UserId && u.CourseId == request.CourseId);
-            if(progress == null)
+
+            if (progress == null)
             {
-                return BadRequest("Progress Not Found");
+                var subject = await _context.Subjects.Include(u => u.Lessons).FirstOrDefaultAsync(u => u.CourseId == request.CourseId);
+
+                if (subject == null)
+                {
+                    return BadRequest("No subjects found for the specified course.");
+                }
+
+
+                var firstLesson = subject.Lessons.OrderBy(l => l.LessonId).FirstOrDefault();
+
+
+                if (firstLesson == null)
+                {
+                    return BadRequest("No lessons found for the specified subject.");
+                }
+
+
+                var newProgress = new ProgressModel
+                {
+                    UserId = user.UserId,
+                    CourseId = (int)request.CourseId,
+                    SubjectId = subject.SubjectId, // Assuming 1 is the ID of the first subject
+                    LessonId = firstLesson.LessonId,  // Assuming 1 is the ID of the first lesson
+                };
+
+                _context.Progress.Add(newProgress);
+                await _context.SaveChangesAsync();
+
+                var response = new
+                {
+                    progressId = newProgress.ProgressId,
+                    subjectId = newProgress.SubjectId,
+                    lessonId = newProgress.LessonId,
+                };
+
+                return Ok(response);
             }
 
-            
-            var response = new
+            var existingProgress = new
             {
                 progressId = progress.ProgressId,
                 subjectId = progress.SubjectId,
                 lessonId = progress.LessonId,
             };
 
-            return Ok(response);
+            return Ok(existingProgress);
         }
+
 
 
         [HttpPost("complete-lesson"), Authorize]
