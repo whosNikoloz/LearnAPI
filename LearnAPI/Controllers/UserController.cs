@@ -145,7 +145,6 @@ namespace LearnAPI.Controllers
                 Picture = request.picture,
                 OAuthProvider = request.oAuthProvider,
                 OAuthProviderId = request.oAuthProviderId,
-                VerifiedAt = DateTime.Now,
                 VerificationToken = CreateRandomToken()
             };
 

@@ -153,9 +153,9 @@ namespace LearnAPI.Controllers
         public async Task<IActionResult> Courses()
         {
             var courses = await _context.Courses
-                .Include(u => u.Level)
-                .Include(u => u.Subjects)
-                .Include(u => u.Enrollments)
+                //.Include(u => u.Level)
+                //.Include(u => u.Subjects)
+                //.Include(u => u.Enrollments)
                 .ToListAsync();
 
             return Ok(courses);

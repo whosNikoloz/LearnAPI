@@ -207,7 +207,7 @@ namespace LearnAPI.Controllers
                 return BadRequest("Subject not found.");
             }
 
-            var progress = await _context.Progress.FirstOrDefaultAsync(u => u.UserId == request.UserId && u.LessonId == request.SubjectId);
+            var progress = await _context.Progress.FirstOrDefaultAsync(u => u.UserId == request.UserId && u.SubjectId == request.SubjectId);
             if (progress == null)
             {
                 return NotFound("Progres not found");
@@ -216,12 +216,19 @@ namespace LearnAPI.Controllers
             progress.LessonId = 0;
             progress.Lesson = null;
 
-            var nextSubject = await _context.Subjects.Where(l => l.CourseId == progress.CourseId && l.SubjectId > progress.SubjectId).OrderBy(l => l.SubjectId).FirstOrDefaultAsync();
+            var nextSubject = await _context.Subjects.Include(l => l.Lessons)
+                .Where(l => l.CourseId == progress.CourseId && l.SubjectId > progress.SubjectId)
+                .OrderBy(l => l.SubjectId)
+                .FirstOrDefaultAsync();
 
             if (nextSubject != null)
             {
                 // Update the LessonId in progress to the next lesson's Id
                 progress.SubjectId = nextSubject.SubjectId;
+
+                // Update LessonId with the first LessonId from nextSubject
+                progress.LessonId = (int)(nextSubject.Lessons.FirstOrDefault()?.LessonId);
+
                 _context.Entry(progress).State = EntityState.Modified;
                 await _context.SaveChangesAsync();
 
