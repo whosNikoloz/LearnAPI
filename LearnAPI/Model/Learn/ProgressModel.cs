@@ -19,6 +19,8 @@ namespace LearnAPI.Model.Learn
 
         public int LessonId { get; set; }
 
+        public bool Complete { get; set; } = false;
+
         [JsonIgnore]
         public virtual UserModel? User { get; set; }
 

@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Numerics;
 using System.Security.Claims;
 
 namespace LearnAPI.Controllers
@@ -87,6 +88,7 @@ namespace LearnAPI.Controllers
                     progressId = newProgress.ProgressId,
                     subjectId = newProgress.SubjectId,
                     lessonId = newProgress.LessonId,
+                    complete = newProgress.Complete,
                 };
 
                 return Ok(response);
@@ -97,6 +99,7 @@ namespace LearnAPI.Controllers
                 progressId = progress.ProgressId,
                 subjectId = progress.SubjectId,
                 lessonId = progress.LessonId,
+                complete = progress.Complete,
             };
 
             return Ok(existingProgress);
@@ -213,7 +216,6 @@ namespace LearnAPI.Controllers
                 return NotFound("Progres not found");
             }
 
-            progress.LessonId = 0;
             progress.Lesson = null;
 
             var nextSubject = await _context.Subjects.Include(l => l.Lessons)
@@ -276,13 +278,14 @@ namespace LearnAPI.Controllers
                 return BadRequest("course not found.");
             }
 
-            var progress = await _context.Progress.FirstOrDefaultAsync(u => u.UserId == request.UserId && u.LessonId == request.LessonId);
+            var progress = await _context.Progress.FirstOrDefaultAsync(u => u.UserId == request.UserId && u.CourseId == request.CourseId);
             if (progress == null)
             {
                 return NotFound("Progres not found");
             }
 
-            _context.Progress.Remove(progress);
+            progress.Complete = true;
+
             await _context.SaveChangesAsync();
 
             return Ok("Course complited");

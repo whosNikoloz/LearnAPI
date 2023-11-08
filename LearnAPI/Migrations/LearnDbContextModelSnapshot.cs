@@ -119,6 +119,9 @@ namespace LearnAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ProgressId"));
 
+                    b.Property<bool>("Complete")
+                        .HasColumnType("bit");
+
                     b.Property<int>("CourseId")
                         .HasColumnType("int");
 
