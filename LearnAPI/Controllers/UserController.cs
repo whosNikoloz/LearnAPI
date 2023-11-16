@@ -134,14 +134,20 @@ namespace LearnAPI.Controllers
                 return BadRequest("OAuth2 User already exists.");
             }
 
+            var (firstName, lastName) = ExtractNamesFromUsername(request.username);
+
+            // Generate a unique username based on firstName and lastName
+            var uniqueUsername = GenerateUniqueUsername(firstName, lastName);
+
+
             // Create a new user record
             var user = new UserModel
             {
                 Email = "OAuth",
                 OAuthEmail = request.email,
-                UserName = request.username,
-                FirstName = request.firstName,
-                LastName = request.lastName,
+                UserName = uniqueUsername,
+                FirstName = firstName,
+                LastName = lastName,
                 Picture = request.picture,
                 OAuthProvider = request.oAuthProvider,
                 OAuthProviderId = request.oAuthProviderId,
@@ -167,6 +173,36 @@ namespace LearnAPI.Controllers
             return Ok("OAuth2 User successfully registered.");
         }
 
+        // Function to generate a unique username based on firstName and lastName
+        private string GenerateUniqueUsername(string firstName, string lastName)
+        {
+            var baseUsername = (firstName.Length > 0 ? firstName[0].ToString() : "") + (lastName.Length > 0 ? lastName : "");
+            var username = baseUsername;
+            var count = 1;
+
+            // Check if the username is already in use, and if so, append a number to make it unique
+            while (_context.Users.Any(u => u.UserName == username))
+            {
+                username = $"{baseUsername}{count}";
+                count++;
+            }
+
+            return username;
+        }
+
+        private (string, string) ExtractNamesFromUsername(string username)
+        {
+            // Split the username into parts based on spaces
+            var nameParts = username.Split(' ');
+
+            // Take the first part as the first name
+            var firstName = nameParts.Length > 0 ? nameParts[0] : "";
+
+            // Take the rest as the last name
+            var lastName = nameParts.Length > 1 ? string.Join(" ", nameParts.Skip(1)) : "";
+
+            return (firstName, lastName);
+        }
 
         // ამოიღეთ მომხმარებელი ID-ით.
         // მოითხოვს ადმინისტრატორის პრივილეგიებს.
@@ -565,7 +601,7 @@ namespace LearnAPI.Controllers
 
 
         // მოითხოვეთ პაროლის აღდგენა ელექტრონული ფოსტით.
-        // POST api/User/ForgotPassword
+        // POST api/User/ForgotPass
         [HttpPost("User/ForgotPassword")]
         public async Task<IActionResult> ForgotPasswordRequest(string email)
         {
@@ -585,7 +621,7 @@ namespace LearnAPI.Controllers
             user.PasswordResetToken = CreateRandomToken();
             user.ResetTokenExpires = DateTime.Now.AddDays(1);
 
-            string returnUrl = "https://localhost:7070/Account/ResetPassword";
+            string returnUrl = "http://192.168.1.68:3000/user/reset-password";
 
             string verificationLink = $"{returnUrl}?token={user.PasswordResetToken}";
 
@@ -600,7 +636,7 @@ namespace LearnAPI.Controllers
 
         // გადააყენეთ მომხმარებლის პაროლი გადატვირთვის ნიშნის გამოყენებით.
         // POST api/User/ResetPassword
-        [HttpPost("User/ResetPassword")]
+        [HttpPut("User/ResetPassword")]
         public async Task<IActionResult> ResetPassword(ResetPasswordRequest request)
         {
             if (!ModelState.IsValid)
