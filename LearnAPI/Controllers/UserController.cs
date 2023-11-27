@@ -44,8 +44,8 @@ namespace LearnAPI.Controllers
         // მიიღეთ კონკრეტული მომხმარებლის პროფილი მომხმარებლის სახელით.
         // საჭიროებს ავთენტიფიკაციას.
         // GET api/User/{username}
-        [HttpGet("User/{username}"), Authorize]
-        public async Task<IActionResult> GetUser(string username)
+        [HttpGet("User/{userid}"), Authorize]
+        public async Task<IActionResult> GetUser(int userid)
         {
             if (!ModelState.IsValid)
             {
@@ -55,17 +55,41 @@ namespace LearnAPI.Controllers
 
             var user = await _context.Users
                 .Include(u => u.Enrollments)
-                .Include(u => u.Notifications)
+                .Include(u => u.Notifications.OrderByDescending(n => n.CreatedAt)) // Order notifications by createdAt in descending order
                 .Include(u => u.Posts)
                 .Include(u => u.Comments)
                 .Include(u => u.Progresses)
-                .FirstOrDefaultAsync(u => u.UserName == username);
+                .FirstOrDefaultAsync(u => u.UserId == userid);
+            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value; //JWT id ჩეკავს
+            var JWTRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value; //JWT Role
+
+            
+
+            string jwttoken = CreateToken(user);
+
+            var response = new
+            {
+                User = new
+                {
+                    userId = user.UserId,
+                    userName = user.UserName,
+                    firstName = user.FirstName,
+                    lastName = user.LastName,
+                    email = user.Email,
+                    oauth = false,
+                    phoneNumber = user.PhoneNumber,
+                    picture = user.Picture,
+                    notification = user.Notifications,
+                    joinedAt = user.VerifiedAt
+                },
+                Token = jwttoken
+            };
 
             if (user == null)
             {
                 return BadRequest("No User");
             }
-            return Ok(user);
+            return Ok(response);
         }
 
         // ახალი მომხმარებლის რეგისტრაცია.
@@ -262,9 +286,11 @@ namespace LearnAPI.Controllers
                     firstName = user.FirstName,
                     lastName = user.LastName,
                     email = user.OAuthEmail,
+                    oauth = true,
                     phoneNumber = user.PhoneNumber,
                     picture = user.Picture,
-                    notification = user.Notifications
+                    notification = user.Notifications,
+                    joinedAt = user.VerifiedAt
                 },
                 Token = jwttoken
             };
@@ -340,9 +366,11 @@ namespace LearnAPI.Controllers
                     firstName = user.FirstName,
                     lastName = user.LastName,
                     email = user.Email,
+                    oauth = false,
                     phoneNumber = user.PhoneNumber,
                     picture = user.Picture,
-                    notification = user.Notifications
+                    notification = user.Notifications,
+                    joinedAt = user.VerifiedAt
                 },
                 Token = jwttoken
             };
@@ -430,19 +458,71 @@ namespace LearnAPI.Controllers
         }
 
 
-
         // შეცვალეთ მომხმარებლის პაროლი.
         // საჭიროებს ავთენტიფიკაციას.
-        // POST api/User/ChangePassword
-        [HttpPost("User/ChangePassword"), Authorize]
-        public async Task<IActionResult> ChangePassword(UserModel requestuser, string newpassword, string oldpassword)
+        // POST api/User/ChangeGeneral
+        [HttpPut("User/ChangeGeneral"), Authorize]
+        public async Task<IActionResult> ChangeGeneral(ChangeGeneralRequest request)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == requestuser.Email);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == request.UserId);
+            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value; //JWT id ჩეკავს
+            var JWTRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value; //JWT Role
+
+            if (user == null)
+            {
+                return NotFound("user not found.");
+            }
+            if (userId != user.UserId.ToString())
+            {
+                if (JWTRole != "admin")
+                {
+                    return BadRequest("Authorize invalid");
+                }
+            }
+
+            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.UserName == request.UserName);
+            if (existingUser != null)
+            {
+                return BadRequest("Username already exists in the database.");
+            }
+
+            user.UserName = request.UserName;
+            user.FirstName = request.FirstName;
+            user.LastName = request.LastName;
+            user.PhoneNumber = request.PhoneNumber;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Exception occurred during SaveChangesAsync: " + ex.Message);
+            }
+
+
+            return Ok("Successfully Changed");
+        }
+
+
+
+        // შეცვალეთ მომხმარებლის პაროლი.
+        // საჭიროებს ავთენტიფიკაციას.
+        // POST api/User/ChangePassword
+        [HttpPut("User/ChangePassword"), Authorize]
+        public async Task<IActionResult> ChangePassword(ChangePasswordRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == request.UserId);
             var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value; //JWT id ჩეკავს
             var JWTRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value; //JWT Role
 
@@ -457,12 +537,12 @@ namespace LearnAPI.Controllers
                     return BadRequest("Authorize invalid");
                 }
             }
-            if (!VerifyPasswordHash(oldpassword, requestuser.PasswordHash, requestuser.PasswordSalt))
+            if (!VerifyPasswordHash(request.OldPassword, user.PasswordHash, user.PasswordSalt))
             {
                 return BadRequest("Wrong password.");
             }
 
-            CreatePasswordHash(newpassword, out byte[] passwordHash, out byte[] passwordSalt);
+            CreatePasswordHash(request.Password, out byte[] passwordHash, out byte[] passwordSalt);
 
 
             user.PasswordHash = passwordHash;
@@ -480,7 +560,7 @@ namespace LearnAPI.Controllers
             }
 
 
-            return Ok(requestuser);
+            return Ok("Successfully Changed");
         }
 
 
