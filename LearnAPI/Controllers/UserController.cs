@@ -749,7 +749,7 @@ namespace LearnAPI.Controllers
 
 
 
-        [HttpPost("User/ChangeEmailRequest"), Authorize]
+        [HttpPost("User/ChangeEmailRequest/{email}"), Authorize]
         public async Task<IActionResult> ChangeEmailRequest(string email)
         {
             if (!ModelState.IsValid)
@@ -794,7 +794,7 @@ namespace LearnAPI.Controllers
 
 
 
-        [HttpPost("User/ChangeEmail"), Authorize]
+        [HttpPost("User/ChangeEmail/{email}"), Authorize]
         public async Task<IActionResult> ChangeEmail(string email)
         {
 
@@ -819,9 +819,39 @@ namespace LearnAPI.Controllers
 
             await _context.SaveChangesAsync();
 
-            return Ok("წარმათებით შეიცვალა");
+            return Ok();
         }
 
+
+        [HttpGet("User/ReLogin/{password}"), Authorize]
+        public async Task<IActionResult> ReLogin(string password)
+        {
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value; //JWT id ჩეკავს
+            var JWTRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value; //JWT Role
+
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId.ToString() == userId);
+
+            if (user == null)
+            {
+                return BadRequest("User Not Found");
+            }
+
+
+            if (!VerifyPasswordHash(password, user.PasswordHash, user.PasswordSalt))
+            {
+                return BadRequest("Wrong password.");
+            }
+
+
+            return Ok();
+        }
 
 
 
