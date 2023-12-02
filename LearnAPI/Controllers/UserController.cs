@@ -614,7 +614,7 @@ namespace LearnAPI.Controllers
         // საჭიროებს ავთენტიფიკაციას.
         // POST api/User/UploadImage
         [HttpPost("User/UploadImage"), Authorize]
-        public async Task<IActionResult> UploadUserProfileImage(UserModel imagerequest)
+        public async Task<IActionResult> UploadUserProfileImage(UploadImageRequest imagerequest)
         {
             if (!ModelState.IsValid)
             {
@@ -625,7 +625,7 @@ namespace LearnAPI.Controllers
             var JWTRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value; //JWT Role
 
 
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == imagerequest.Email);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == imagerequest.UserId);
 
             if (user == null)
             {
@@ -639,12 +639,12 @@ namespace LearnAPI.Controllers
                 }
             }
 
-            user.Picture = imagerequest.Picture;
+            user.Picture = imagerequest.PictureUrl;
 
             try
             {
                 await _context.SaveChangesAsync();
-                return Ok("Successfully changed Username or number");
+                return Ok();
             }
             catch (Exception ex)
             {
