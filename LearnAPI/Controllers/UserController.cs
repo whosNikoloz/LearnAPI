@@ -675,7 +675,7 @@ namespace LearnAPI.Controllers
             user.VerifiedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
-            string verificationSuccessUrl = "http://192.168.1.68:3000/users/auth/verification-successful";
+            string verificationSuccessUrl = "http://192.168.1.68:3000/user/auth/verification-successful";
 
             // Redirect the user to the verification success URL
             return Redirect(verificationSuccessUrl);
@@ -775,7 +775,7 @@ namespace LearnAPI.Controllers
 
             if (_context.Users.Any(u => u.Email == email && u.OAuthEmail == null ))
             {
-                return BadRequest("Email Email Already Exsists");
+                return BadRequest("ასეთი ანგარიში უკვე რეგისტრირებულია");
             }
 
 
