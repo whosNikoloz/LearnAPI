@@ -14,7 +14,6 @@ using System.Security.Cryptography;
 using LearnAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Cors;
-using Azure.Core;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.Diagnostics.Metrics;
 using System;
