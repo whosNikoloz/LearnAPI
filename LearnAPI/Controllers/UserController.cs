@@ -135,7 +135,7 @@ namespace LearnAPI.Controllers
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            string host = "192.168.1.68:45455";
+            string host = "192.168.1.56:45455";
 
             string verificationLink = Url.ActionLink("VerifyEmail", "User", new { token = user.VerificationToken }, Request.Scheme, host);
 
@@ -674,7 +674,7 @@ namespace LearnAPI.Controllers
             user.VerifiedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
-            string verificationSuccessUrl = "http://192.168.1.68:3000/user/auth/verification-successful";
+            string verificationSuccessUrl = "http://192.168.1.56:3000/user/auth/verification-successful";
 
             // Redirect the user to the verification success URL
             return Redirect(verificationSuccessUrl);

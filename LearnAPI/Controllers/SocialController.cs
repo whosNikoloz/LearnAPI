@@ -7,6 +7,10 @@ using Microsoft.EntityFrameworkCore;
 using LearnAPI.Model.Learn.Test;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
+using LearnAPI.Hubs;
+using System.Collections.Concurrent;
+using MySqlX.XDevAPI;
 
 namespace LearnAPI.Controllers
 {
@@ -16,13 +20,17 @@ namespace LearnAPI.Controllers
     {
         private readonly LearnDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly IHubContext<NotificationHub> _hubContext;
 
-        public SocialController(LearnDbContext context, IConfiguration configuration)
+        public SocialController(LearnDbContext context, IConfiguration configuration, IHubContext<NotificationHub> hubContext)
         {
             _configuration = configuration;
             _context = context;
+            _hubContext = hubContext; 
         }
 
+
+        private readonly ConcurrentDictionary<string, string> userConnectionMap = NotificationHub.userConnectionMap;
 
         // ---------- Posts ----------
 
@@ -456,6 +464,10 @@ namespace LearnAPI.Controllers
                 };
 
                 _context.Notifications.Add(notification);
+
+                var connectedPostOwnerUser = GetConnectionIdForUserId(post.User.UserId.ToString());
+
+                await _hubContext.Clients.Client(connectedPostOwnerUser).SendAsync("ReceiveNotification", notification);
             }
 
 
@@ -465,6 +477,11 @@ namespace LearnAPI.Controllers
 
             return Ok(NewComment);
 
+        }
+
+        private string GetConnectionIdForUserId(string userId)
+        {
+            return userConnectionMap.TryGetValue(userId, out var connectionId) ? connectionId : null;
         }
 
 

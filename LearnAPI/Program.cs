@@ -1,4 +1,5 @@
 using LearnAPI.Data;
+using LearnAPI.Hubs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -45,16 +46,21 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 
 builder.Services.AddDbContext<LearnDbContext>(options => options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
-builder.Services.AddCors(options =>
+builder.Services.AddSignalR();
+
+builder.Services.AddSingleton<NotificationHub>();
+
+builder.Services.AddCors(opt =>
 {
-    options.AddPolicy("AllowAllOrigins",
-        builder =>
-        {
-            builder.AllowAnyOrigin()
-                   .AllowAnyHeader()
-                   .AllowAnyMethod();
-        });
+    opt.AddPolicy("reactapp", builder =>
+    {
+        builder.WithOrigins("http://localhost:3000")
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
+    });
 });
+
 
 
 var app = builder.Build();
@@ -70,10 +76,14 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 
+
 app.UseAuthorization();
 
-app.UseCors("AllowAllOrigins");
+app.UseCors("reactapp");
 
 app.MapControllers();
+
+app.MapHub<NotificationHub>("/notificationHub");
+
 
 app.Run();

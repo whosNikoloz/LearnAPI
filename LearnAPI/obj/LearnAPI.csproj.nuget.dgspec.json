@@ -52,6 +52,10 @@
               "target": "Package",
               "version": "[7.0.10, )"
             },
+            "Microsoft.AspNetCore.SignalR.Common": {
+              "target": "Package",
+              "version": "[8.0.1, )"
+            },
             "Microsoft.CodeAnalysis.CSharp.Scripting": {
               "target": "Package",
               "version": "[4.7.0, )"
