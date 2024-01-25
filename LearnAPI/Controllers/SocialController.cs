@@ -383,6 +383,12 @@ namespace LearnAPI.Controllers
             // Remove the comments
             _context.Comments.RemoveRange(comments);
 
+
+            // Retrieve notifications associated with the post
+            var notifications = await _context.Notifications.Where(n => n.PostId == postId).ToListAsync();
+
+            _context.Notifications.RemoveRange(notifications);
+
             // Remove the post
             user.Posts.Remove(post);
             _context.Posts.Remove(post);
@@ -458,6 +464,7 @@ namespace LearnAPI.Controllers
                     Message = $"{post.Content}",
                     CreatedAt = DateTime.Now,
                     IsRead = false,
+                    PostId = postid,
                     CommentAuthorUsername = user.UserName,
                     CommentAuthorPicture = user.Picture,
                     User = post.User
@@ -649,6 +656,40 @@ namespace LearnAPI.Controllers
             }
 
             var notifications = user.Notifications.OrderByDescending(n => n.CreatedAt).ToList();
+            return Ok(notifications);
+        }
+
+
+        [HttpPut("MarkNotificationsAsRead/{userId}"), Authorize]
+        public async Task<IActionResult> MarkNotificationsAsRead(int userId)
+        {
+            var requestingUserId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+            var requestingUserRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
+
+            var user = await _context.Users.Include(u => u.Notifications).FirstOrDefaultAsync(u => u.UserId == userId);
+
+            if (user == null)
+            {
+                return NotFound("User not found");
+            }
+
+            if (requestingUserId != userId.ToString())
+            {
+                if (requestingUserRole != "admin")
+                {
+                    return BadRequest("Unauthorized");
+                }
+            }
+
+            var notifications = user.Notifications.OrderByDescending(n => n.CreatedAt).ToList();
+
+            foreach (var notification in notifications)
+            {
+                notification.IsRead = true;
+            }
+
+            await _context.SaveChangesAsync();
+
             return Ok(notifications);
         }
 

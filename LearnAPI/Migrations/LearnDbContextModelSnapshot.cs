@@ -333,6 +333,9 @@ namespace LearnAPI.Migrations
                     b.Property<string>("Message")
                         .HasColumnType("longtext");
 
+                    b.Property<int>("PostId")
+                        .HasColumnType("int");
+
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
