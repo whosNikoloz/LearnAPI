@@ -94,6 +94,85 @@ namespace LearnAPI.Controllers
             return Ok(response);
         }
 
+
+
+
+        [HttpPost("Auth/Login/check-email")]
+        public async Task<IActionResult> CheckEmailLogin(CheckEmailRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            bool emailExists = await _context.Users.AnyAsync(u => u.Email == request.Email);
+
+            if (!emailExists)
+            {
+                return Ok(new
+                {
+                    successful = false,
+                    error = "ასეთი მეილი არარსებობს"
+                });
+            }
+
+            return Ok(new
+            {
+                Successful = true
+            });
+        }
+
+        [HttpPost("Auth/Register/check-email")]
+        public async Task<IActionResult> CheckEmailReg(CheckEmailRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            bool emailExists = await _context.Users.AnyAsync(u => u.Email == request.Email);
+
+
+            if (emailExists)
+            {
+                return Ok(new
+                {
+                    successful = false,
+                    error = "ასეთი მეილი უკვე არსებობს"
+                });
+            }
+
+            return Ok(new
+            {
+                Successful = true
+            });
+        }
+
+        [HttpGet("Auth/Register/check-username/{username}")]
+        public async Task<IActionResult> CheckUserName(string username)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            bool usernameExists = await _context.Users.AnyAsync(u => u.UserName == username);
+
+            if (usernameExists)
+            {
+                return Ok(new
+                {
+                    successful = false,
+                    error = "სახელი დაკავებულია"
+                });
+            }
+
+            return Ok(new
+            {
+                Successful = true
+            });
+        }
+
         // ახალი მომხმარებლის რეგისტრაცია.
         // POST api/Auth/რეგისტრაცია
         [HttpPost("Auth/Register")]
@@ -344,23 +423,32 @@ namespace LearnAPI.Controllers
 
             if (user == null)
             {
-                return BadRequest("User not found.");
+                return NotFound("User not found.");
             }
 
             if (!VerifyPasswordHash(request.Password, user.PasswordHash, user.PasswordSalt))
             {
-                return BadRequest("Wrong password.");
+                return Ok(new
+                {
+                    successful = false,
+                    error = "Wrong Passwrod"
+                });
             }
 
             if (user.VerifiedAt == DateTime.MinValue)
             {
-                return BadRequest("User not verified.");
+                return Ok(new
+                {
+                    successful = false,
+                    error = "User Not Verified"
+                });
             }
 
             string jwttoken = CreateToken(user);
 
             var response = new
             {
+
                 User = new
                 {
                     userId = user.UserId,
@@ -377,7 +465,11 @@ namespace LearnAPI.Controllers
                 Token = jwttoken
             };
 
-            return Ok(response);
+            return Ok(new
+            {
+                successful = true,
+                response
+            });
 
         }
 
