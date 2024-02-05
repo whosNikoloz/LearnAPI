@@ -766,7 +766,7 @@ namespace LearnAPI.Controllers
             user.VerifiedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
-            string verificationSuccessUrl = "http://192.168.1.56:3000/user/auth/verification-successful";
+            string verificationSuccessUrl = "http://localhost:3000/user/auth/verification-successful";
 
             // Redirect the user to the verification success URL
             return Redirect(verificationSuccessUrl);
@@ -795,7 +795,7 @@ namespace LearnAPI.Controllers
             user.PasswordResetToken = CreateRandomToken();
             user.ResetTokenExpires = DateTime.Now.AddDays(1);
 
-            string returnUrl = "http://192.168.1.68:3000/user/reset-password";
+            string returnUrl = "http://localhost:3000/user/reset-password";
 
             string verificationLink = $"{returnUrl}?token={user.PasswordResetToken}";
 

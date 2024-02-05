@@ -317,11 +317,9 @@ namespace LearnAPI.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("CommentAuthorPicture")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("CommentAuthorUsername")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<DateTime>("CreatedAt")
