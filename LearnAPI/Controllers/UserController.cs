@@ -580,10 +580,11 @@ namespace LearnAPI.Controllers
             }
 
             var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.UserName == request.UserName);
-            if (existingUser != null)
+            if(existingUser != user && existingUser != null)
             {
                 return BadRequest("Username already exists in the database.");
             }
+            
 
             user.UserName = request.UserName;
             user.FirstName = request.FirstName;
