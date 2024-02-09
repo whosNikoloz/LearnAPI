@@ -41,8 +41,9 @@ namespace LearnAPI.Hubs
 
         private string GetUserIdFromContext()
         {
-            return Context.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return Context.GetHttpContext().Request.Query["userId"];
         }
+
 
         private void AddOrUpdateConnectionId(string userId, string connectionId)
         {

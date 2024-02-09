@@ -20,17 +20,20 @@ namespace LearnAPI.Controllers
     {
         private readonly LearnDbContext _context;
         private readonly IConfiguration _configuration;
-        private readonly IHubContext<NotificationHub> _hubContext;
+        private readonly IHubContext<NotificationHub> _NothubContext;
+        private readonly IHubContext<CommentHub> _ComhubContext;
 
-        public SocialController(LearnDbContext context, IConfiguration configuration, IHubContext<NotificationHub> hubContext)
+        public SocialController(LearnDbContext context, IConfiguration configuration, IHubContext<NotificationHub> NothubContext, IHubContext<CommentHub> ComhubContext)
         {
             _configuration = configuration;
             _context = context;
-            _hubContext = hubContext; 
+            _NothubContext = NothubContext;
+            _ComhubContext = ComhubContext;
         }
 
 
         private readonly ConcurrentDictionary<string, string> userConnectionMap = NotificationHub.userConnectionMap;
+        private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, string>> userPostConnectionMap = CommentHub.userPostConnectionMap;
 
         // ---------- Posts ----------
 
@@ -412,42 +415,37 @@ namespace LearnAPI.Controllers
         [HttpPost("Comments/{postid}"), Authorize]
         public async Task<IActionResult> CreateComment(CommentRequestModel comment, int postid)
         {
-            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value; //JWT id ჩეკავს
+            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value; //JWT id check
             var JWTRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value; //JWT Role
-
 
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-
             var post = await _context.Posts.Include(u => u.User).FirstOrDefaultAsync(u => u.PostId == postid);
-
 
             if (post == null)
             {
                 return NotFound(); // Handle if the post doesn't exist
             }
 
-
             var user = await _context.Users.Include(u => u.Posts).FirstOrDefaultAsync(u => u.UserId.ToString() == userId);
-
 
             if (user == null)
             {
-                return NotFound(); // Handle if the post doesn't exist
+                return NotFound(); // Handle if the user doesn't exist
             }
 
             if (userId != user.UserId.ToString())
             {
                 if (JWTRole != "admin")
                 {
-                    return BadRequest("Authorize invalid");
+                    return BadRequest("Unauthorized");
                 }
             }
 
-            var NewComment = new CommentModel
+            var newComment = new CommentModel
             {
                 Content = comment.Content,
                 Picture = comment.Picture,
@@ -457,38 +455,103 @@ namespace LearnAPI.Controllers
                 User = user,
             };
 
-            if (post.User.UserId.ToString() != userId) // Avoid sending notifications to the comment author
-            {
-                var notification = new NotificationModel
-                {
-                    Message = $"{post.Content}",
-                    CreatedAt = DateTime.Now,
-                    IsRead = false,
-                    PostId = postid,
-                    CommentAuthorUsername = user.UserName,
-                    CommentAuthorPicture = user.Picture,
-                    User = post.User
-                };
-
-                _context.Notifications.Add(notification);
-
-                var connectedPostOwnerUser = GetConnectionIdForUserId(post.User.UserId.ToString());
-
-                await _hubContext.Clients.Client(connectedPostOwnerUser).SendAsync("ReceiveNotification", notification);
-            }
-
-
-            _context.Comments.Add(NewComment);
+            _context.Comments.Add(newComment);
             await _context.SaveChangesAsync();
 
+            // Get the newly created comment from the database with its ID
+            var savedComment = await _context.Comments
+                .Include(c => c.User) // Assuming there's a navigation property to the user who made the comment
+                .FirstOrDefaultAsync(c => c.CommentId == newComment.CommentId);
 
-            return Ok(NewComment);
+            if(savedComment == null)
+            {
+                return NotFound();
+            }
 
+            var mappedComment = new
+            {
+                commentId = savedComment.CommentId,
+                commentContent = savedComment.Content,
+                commentPicture = savedComment.Picture,
+                commentVideo = savedComment.Video,
+                commentCreatedAt = savedComment.CreatedAt,
+                commentUser = new
+                {
+                    userId = savedComment.User.UserId,
+                    firstname = savedComment.User.FirstName,
+                    lastname = savedComment.User.LastName,
+                    username = savedComment.User.UserName,
+                    picture = savedComment.User.Picture,
+                }
+            };
+
+
+            // Construct notification
+            var notification = new NotificationModel
+            {
+                Message = $"{post.Content}",
+                CreatedAt = DateTime.Now,
+                IsRead = false,
+                PostId = postid,
+                CommentAuthorUsername = user.UserName,
+                CommentAuthorPicture = user.Picture,
+                User = post.User
+            };
+
+            // Send notification to post owner if they are connected
+            var connectedPostOwnerUser = GetConnectionIdForUserId(post.User.UserId.ToString());
+            if (connectedPostOwnerUser != null)
+            {
+                await _NothubContext.Clients.Client(connectedPostOwnerUser).SendAsync("ReceiveNotification", notification);
+            }
+
+            // Send notification to all connected users on the post
+            var connectedUsersOnPost = GetUserIdsAndConnectionIdsForPostId(postid.ToString());
+            if (connectedUsersOnPost != null)
+            {
+                foreach (var u in connectedUsersOnPost)
+                {
+                    var connectionId = u.Item2;
+                    await _ComhubContext.Clients.Client(connectionId).SendAsync("ReceiveComment", mappedComment);
+                }
+            }
+
+            return Ok(savedComment);
         }
 
         private string GetConnectionIdForUserId(string userId)
         {
             return userConnectionMap.TryGetValue(userId, out var connectionId) ? connectionId : null;
+        }
+
+        private List<(string userId, string connectionId)> GetUserIdsAndConnectionIdsForPostId(string postId)
+        {
+            List<(string userId, string connectionId)> userConnections = new List<(string userId, string connectionId)>();
+
+            foreach (var userDict in userPostConnectionMap)
+            {
+                if (userDict.Value.ContainsKey(postId))
+                {
+                    // Get the connection ID for the user ID
+                    string connectionId = GetConnectionIdForUserIdCom(userDict.Key);
+
+                    userConnections.Add((userDict.Key, connectionId));
+                }
+            }
+
+            return userConnections;
+        }
+
+        private string GetConnectionIdForUserIdCom(string userId)
+        {
+            if (userPostConnectionMap.TryGetValue(userId, out ConcurrentDictionary<string, string> connectionMap))
+            {
+                if (connectionMap.Count > 0)
+                {
+                    return connectionMap.Values.First();
+                }
+            }
+            return null;
         }
 
 
@@ -524,6 +587,8 @@ namespace LearnAPI.Controllers
 
                 responseList.Add(postResponse);
             }
+
+
 
             return Ok(responseList);
 

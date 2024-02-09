@@ -84,6 +84,7 @@ app.UseCors("reactapp");
 app.MapControllers();
 
 app.MapHub<NotificationHub>("/notificationHub");
+app.MapHub<CommentHub>("/commentHub");
 
 
 app.Run();
