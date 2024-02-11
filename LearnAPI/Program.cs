@@ -54,10 +54,10 @@ builder.Services.AddCors(opt =>
 {
     opt.AddPolicy("reactapp", builder =>
     {
-        builder.WithOrigins("http://localhost:3000")
-            .AllowAnyMethod()
-            .AllowAnyHeader()
-            .AllowCredentials();
+        builder.WithOrigins("https://edu-space.vercel.app", "http://localhost:3000")
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .AllowCredentials();
     });
 });
 

@@ -57,7 +57,6 @@ namespace LearnAPI.Controllers
 
             var user = await _context.Users
                 .Include(u => u.Enrollments)
-                .Include(u => u.Notifications.OrderByDescending(n => n.CreatedAt)) // Order notifications by createdAt in descending order
                 .Include(u => u.Posts)
                 .Include(u => u.Comments)
                 .Include(u => u.Progresses)
@@ -78,10 +77,8 @@ namespace LearnAPI.Controllers
                     firstName = user.FirstName,
                     lastName = user.LastName,
                     email = user.Email,
-                    oauth = false,
                     phoneNumber = user.PhoneNumber,
                     picture = user.Picture,
-                    notification = user.Notifications,
                     joinedAt = user.VerifiedAt
                 },
                 Token = jwttoken
@@ -338,7 +335,6 @@ namespace LearnAPI.Controllers
 
             var user = await _context.Users
                 .Include(u => u.Enrollments)
-                .Include(u => u.Notifications.OrderByDescending(n => n.CreatedAt)) // Order notifications by createdAt in descending order
                 .Include(u => u.Posts)
                 .Include(u => u.Comments)
                 .Include(u => u.Progresses)
@@ -370,7 +366,6 @@ namespace LearnAPI.Controllers
                     oauth = true,
                     phoneNumber = user.PhoneNumber,
                     picture = user.Picture,
-                    notification = user.Notifications,
                     joinedAt = user.VerifiedAt
                 },
                 Token = jwttoken
@@ -415,7 +410,6 @@ namespace LearnAPI.Controllers
 
             var user = await _context.Users
                 .Include(u => u.Enrollments)
-                .Include(u => u.Notifications.OrderByDescending(n => n.CreatedAt)) // Order notifications by createdAt in descending order
                 .Include(u => u.Posts)
                 .Include(u => u.Comments)
                 .Include(u => u.Progresses)
@@ -459,7 +453,6 @@ namespace LearnAPI.Controllers
                     oauth = false,
                     phoneNumber = user.PhoneNumber,
                     picture = user.Picture,
-                    notification = user.Notifications,
                     joinedAt = user.VerifiedAt
                 },
                 Token = jwttoken
@@ -1360,10 +1353,17 @@ namespace LearnAPI.Controllers
             List<Claim> calims = new List<Claim>
             {
              new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
-              new Claim(ClaimTypes.Name, user.UserName),
+              new Claim(ClaimTypes.Email, user.Email),
+              new Claim(ClaimTypes.Name, user.FirstName),
+              new Claim(ClaimTypes.Surname, user.LastName),
+              new Claim(ClaimTypes.NameIdentifier, user.UserName),
+              new Claim(ClaimTypes.MobilePhone, user.PhoneNumber),
+              new Claim("ProfilePicture", user.Picture),
+              new Claim("joinedAt", user.VerifiedAt.ToString()),
               new Claim(ClaimTypes.Role, user.Role),
-              new Claim(ClaimTypes.Email, user.Email)
             };
+
+
 
             var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(
                 _configuration.GetSection("AppSettings:Token").Value));
