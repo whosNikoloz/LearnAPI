@@ -371,7 +371,11 @@ namespace LearnAPI.Controllers
                 Token = jwttoken
             };
 
-            return Ok(response);
+            return Ok(new
+            {
+                successful = true,
+                response
+            });
         }
 
 
@@ -409,10 +413,6 @@ namespace LearnAPI.Controllers
             }
 
             var user = await _context.Users
-                .Include(u => u.Enrollments)
-                .Include(u => u.Posts)
-                .Include(u => u.Comments)
-                .Include(u => u.Progresses)
                 .FirstOrDefaultAsync(u => u.Email == request.Email);
 
             if (user == null)
