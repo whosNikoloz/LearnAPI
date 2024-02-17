@@ -1350,20 +1350,29 @@ namespace LearnAPI.Controllers
 
         private string CreateToken(UserModel user)
         {
-            List<Claim> calims = new List<Claim>
+            List<Claim> claims;
+            try
             {
-             new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
-              new Claim(ClaimTypes.Email, user.Email),
-              new Claim(ClaimTypes.Name, user.FirstName),
-              new Claim(ClaimTypes.Surname, user.LastName),
-              new Claim(ClaimTypes.NameIdentifier, user.UserName),
-              new Claim(ClaimTypes.MobilePhone, user.PhoneNumber),
-              new Claim("ProfilePicture", user.Picture),
-              new Claim("joinedAt", user.VerifiedAt.ToString()),
-              new Claim(ClaimTypes.Role, user.Role),
+                claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+                new Claim(ClaimTypes.Email, (user.Email != null ? user.Email : "")),
+                new Claim(ClaimTypes.Name, (user.FirstName != null ? user.FirstName : "")),
+                new Claim(ClaimTypes.Surname, (user.LastName != null ? user.LastName : "")),
+                new Claim(ClaimTypes.NameIdentifier, (user.UserName != null ? user.UserName : "")),
+                new Claim(ClaimTypes.MobilePhone, (user.PhoneNumber != null ? user.PhoneNumber : "") ),
+                new Claim("ProfilePicture", (user.Picture != null ? user.Picture : "")),
+                new Claim("joinedAt", user.VerifiedAt.ToString()),
+                new Claim(ClaimTypes.Role, (user.Role != null ? user.Role : "")),
             };
-
-
+            }
+            catch (Exception ex)    
+            {
+                // Log the exception
+                Console.WriteLine($"An error occurred while creating claims: {ex.Message}");
+                // You can choose to throw the exception further if it's not recoverable
+                throw;
+            }
 
             var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(
                 _configuration.GetSection("AppSettings:Token").Value));
@@ -1371,7 +1380,7 @@ namespace LearnAPI.Controllers
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
 
             var token = new JwtSecurityToken(
-                claims: calims,
+                claims: claims,
                 expires: DateTime.Now.AddHours(1),
                 signingCredentials: creds);
 
