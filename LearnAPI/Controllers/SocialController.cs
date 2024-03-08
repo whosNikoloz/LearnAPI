@@ -516,6 +516,9 @@ namespace LearnAPI.Controllers
                 }
             }
 
+            _context.Notifications.Add(notification);
+            await _context.SaveChangesAsync();
+
             return Ok(savedComment);
         }
 

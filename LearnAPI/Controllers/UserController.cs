@@ -789,7 +789,7 @@ namespace LearnAPI.Controllers
             user.PasswordResetToken = CreateRandomToken();
             user.ResetTokenExpires = DateTime.Now.AddDays(1);
 
-            string returnUrl = "http://localhost:3000/user/reset-password";
+            string returnUrl = "http://localhost:3000/ka/user/reset-password";
 
             string verificationLink = $"{returnUrl}?token={user.PasswordResetToken}";
 
