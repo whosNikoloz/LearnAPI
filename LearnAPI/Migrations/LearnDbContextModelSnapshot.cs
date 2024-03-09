@@ -396,9 +396,6 @@ namespace LearnAPI.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
 
-                    b.Property<string>("OAuthEmail")
-                        .HasColumnType("longtext");
-
                     b.Property<string>("OAuthProvider")
                         .HasColumnType("longtext");
 

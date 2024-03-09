@@ -64,6 +64,15 @@ namespace LearnAPI.Controllers
             var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value; //JWT id ჩეკავს
             var JWTRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value; //JWT Role
 
+            if(user == null)
+            {
+                return NotFound("UserNotFound");
+            }
+
+            if(user.OAuthProvider != null)
+            {
+                user.Email = user.Email + "(Oauth)";
+            }
             
 
             string jwttoken = CreateToken(user);
@@ -102,7 +111,7 @@ namespace LearnAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            bool emailExists = await _context.Users.AnyAsync(u => u.Email == request.Email);
+            bool emailExists = await _context.Users.AnyAsync(u => (u.Email == request.Email) && u.OAuthProvider == null);
 
             if (!emailExists)
             {
@@ -127,7 +136,7 @@ namespace LearnAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            bool emailExists = await _context.Users.AnyAsync(u => u.Email == request.Email);
+            bool emailExists = await _context.Users.AnyAsync(u => (u.Email == request.Email) && u.OAuthProvider == null);
 
 
             if (emailExists)
@@ -180,7 +189,7 @@ namespace LearnAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            if (_context.Users.Any(u => u.Email == request.Email) || _context.Users.Any(u => u.UserName == request.UserName))
+            if (_context.Users.Any(u => (u.Email == request.Email) && u.OAuthProvider == null) || _context.Users.Any(u => u.UserName == request.UserName))
             {
                 return BadRequest("User (Email or Username) already exists.");
             }
@@ -193,6 +202,8 @@ namespace LearnAPI.Controllers
                 UserName = request.UserName,
                 FirstName = request.FirstName,
                 LastName = request.LastName,
+                OAuthProvider = null,
+                OAuthProviderId = null,
                 PasswordHash = passwordHash,
                 PasswordSalt = passwordSalt,
                 VerificationToken = CreateRandomToken()
@@ -245,8 +256,7 @@ namespace LearnAPI.Controllers
             // Create a new user record
             var user = new UserModel
             {
-                Email = "OAuth",
-                OAuthEmail = request.email,
+                Email = request.email,
                 UserName = uniqueUsername,
                 FirstName = firstName,
                 LastName = lastName,
@@ -344,6 +354,7 @@ namespace LearnAPI.Controllers
             {
                 return BadRequest("User not found.");
             }
+            user.Email = user.Email + "(Oauth)";
 
             // Normally, OAuth2 authentication would have already occurred, and you'd have an access token
             // and user information from the OAuth2 provider.
@@ -356,18 +367,6 @@ namespace LearnAPI.Controllers
 
             var response = new
             {
-                User = new
-                {
-                    userId = user.UserId,
-                    userName = user.UserName,
-                    firstName = user.FirstName,
-                    lastName = user.LastName,
-                    email = user.OAuthEmail,
-                    oauth = true,
-                    phoneNumber = user.PhoneNumber,
-                    picture = user.Picture,
-                    joinedAt = user.VerifiedAt
-                },
                 Token = jwttoken
             };
 
@@ -442,19 +441,6 @@ namespace LearnAPI.Controllers
 
             var response = new
             {
-
-                User = new
-                {
-                    userId = user.UserId,
-                    userName = user.UserName,
-                    firstName = user.FirstName,
-                    lastName = user.LastName,
-                    email = user.Email,
-                    oauth = false,
-                    phoneNumber = user.PhoneNumber,
-                    picture = user.Picture,
-                    joinedAt = user.VerifiedAt
-                },
                 Token = jwttoken
             };
 
@@ -858,7 +844,7 @@ namespace LearnAPI.Controllers
             await SendWarningEmail(user.Email, user.UserName);
 
 
-            if (_context.Users.Any(u => u.Email == email && u.OAuthEmail == null ))
+            if (_context.Users.Any(u => u.Email == email && u.OAuthProvider == null ))
             {
                 return BadRequest("ასეთი ანგარიში უკვე რეგისტრირებულია");
             }
@@ -1363,6 +1349,7 @@ namespace LearnAPI.Controllers
                 new Claim(ClaimTypes.MobilePhone, (user.PhoneNumber != null ? user.PhoneNumber : "") ),
                 new Claim("ProfilePicture", (user.Picture != null ? user.Picture : "")),
                 new Claim("joinedAt", user.VerifiedAt.ToString()),
+                new Claim("Oauth", (user.OAuthProvider == null ? "" : user.OAuthProvider)),
                 new Claim(ClaimTypes.Role, (user.Role != null ? user.Role : "")),
             };
             }
