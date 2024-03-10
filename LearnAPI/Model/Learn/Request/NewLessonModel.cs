@@ -5,7 +5,8 @@ namespace LearnAPI.Model.Learn.Request
 {
     public class NewLessonModel
     {
-        public string? LessonName { get; set; }
+        public string? LessonName_ka { get; set; }
+        public string? LessonName_en { get; set; }
 
     }
 }

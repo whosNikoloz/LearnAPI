@@ -10,7 +10,8 @@ namespace LearnAPI.Model.Learn
     {
         [Key]
         public int LessonId { get; set; }
-        public string? LessonName { get; set; }
+        public string? LessonName_ka { get; set; }
+        public string? LessonName_en { get; set; }
         public int SubjectId { get; set; }
 
         [JsonIgnore]

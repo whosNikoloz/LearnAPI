@@ -68,15 +68,17 @@ namespace LearnAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            if (_context.Levels.Any(u => u.LevelName == newLevel.LevelName))
+            if (_context.Levels.Any(u => u.LevelName_ka == newLevel.LevelName_ka))
             {
                 return BadRequest("Level Already Exists");
             }
 
             var level = new LevelModel
             {
-                LevelName = newLevel.LevelName,
-                Description = newLevel.Description,
+                LevelName_ka = newLevel.LevelName_ka,
+                LevelName_en = newLevel.LevelName_en,
+                Description_ka = newLevel.Description_ka,
+                Description_en = newLevel.Description_en,
                 LogoURL = newLevel.LogoURL,
             };
 
@@ -108,9 +110,10 @@ namespace LearnAPI.Controllers
                 return NotFound("Level Not Found");
             }
 
-            level.LevelName = newLevel.LevelName;
+            level.LevelName_ka = newLevel.LevelName_ka;
             level.LogoURL = newLevel.LogoURL;
-            level.Description = newLevel.Description;
+            level.Description_ka = newLevel.Description_ka;
+            level.Description_en = newLevel.Description_en;
 
             await _context.SaveChangesAsync();
 
@@ -150,15 +153,63 @@ namespace LearnAPI.Controllers
         /// იღებს კურსების სიას.
         /// </summary>
         [HttpGet("Courses")]
-        public async Task<IActionResult> Courses()
+        public async Task<IActionResult> Courses(string lang = "ka")
         {
-            var courses = await _context.Courses
-                //.Include(u => u.Level)
-                //.Include(u => u.Subjects)
-                //.Include(u => u.Enrollments)
-                .ToListAsync();
+            var courses = await _context.Courses.ToListAsync();
 
-            return Ok(courses);
+            var coursesResponse = new List<object>();
+
+            foreach (var course in courses)
+            {
+                string courseName;
+                string description;
+
+                if (lang.Equals("ka", StringComparison.OrdinalIgnoreCase))
+                {
+                    courseName = course.CourseName_ka ?? course.CourseName_en;
+                    description = course.Description_ka ?? course.Description_en;
+                }
+                else // Default to English if language is not specified or unsupported
+                {
+                    courseName = course.CourseName_en ?? course.CourseName_ka;
+                    description = course.Description_en ?? course.Description_ka;
+                }
+
+                var courseResponse = new
+                {
+                    CourseId = course.CourseId,
+                    CourseName = courseName,
+                    Description = description,
+                    CourseLogo = course.CourseLogo,
+                    FormattedCourseName = course.FormattedCourseName,
+                    LevelId = course.LevelId
+                };
+
+                coursesResponse.Add(courseResponse);
+            }
+
+            return Ok(coursesResponse);
+        }
+
+
+
+        [HttpGet("Courses/CourseName/{notFormattedCourseName}")]
+        public async Task<IActionResult> CourseFormattedName(string notFormattedCourseName, string lang = "ka")
+        {
+            // Determine which column to use based on the language
+            string columnName = $"CourseName_{lang}";
+
+            var course = await _context.Courses
+                .Where(u => u.FormattedCourseName == notFormattedCourseName)
+                .Select(u => new { CourseName = EF.Property<string>(u, columnName) })
+                .FirstOrDefaultAsync();
+
+            if (course == null || string.IsNullOrWhiteSpace(course.CourseName))
+            {
+                return NotFound("Course Not Found");
+            }
+
+            return Ok(course.CourseName);
         }
 
         /// <summary>
@@ -166,7 +217,7 @@ namespace LearnAPI.Controllers
         /// </summary>
         /// <param name="courseid">კურსის უნიკალური იდენტიფიკატორი.</param>
         [HttpGet("Course/{courseName}")]
-        public async Task<IActionResult> Course(string courseName)
+        public async Task<IActionResult> Course(string courseName, string lang = "ka")
         {
             var course = await _context.Courses
                 .Include(u => u.Level)
@@ -174,8 +225,31 @@ namespace LearnAPI.Controllers
                 .Include(u => u.Enrollments)
                 .FirstOrDefaultAsync(u => u.FormattedCourseName == courseName);
 
-            return Ok(course);
+            if (course == null)
+            {
+                return NotFound("Course Not Found");
+            }
+
+            // Determine which property to return based on the language
+            string courseNameProperty = lang == "en" ? "CourseName_en" : "CourseName_ka";
+            string descriptionProperty = lang == "en" ? "Description_en" : "Description_ka";
+
+            // Create a new object with language-specific properties
+            var courseDto = new
+            {
+                CourseId = course.CourseId,
+                CourseName = EF.Property<string>(course, courseNameProperty),
+                Description = EF.Property<string>(course, descriptionProperty),
+                FormattedCourseName = course.FormattedCourseName,
+                CourseLogo = course.CourseLogo,
+                Level = course.Level,
+                Subjects = course.Subjects,
+                Enrollments = course.Enrollments
+            };
+
+            return Ok(courseDto);
         }
+
 
         /// <summary>
         /// Adds a new course.
@@ -190,15 +264,17 @@ namespace LearnAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            if (_context.Courses.Any(u => u.CourseName == newCourseModel.CourseName))
+            if (_context.Courses.Any(u => u.CourseName_ka == newCourseModel.CourseName_ka))
             {
                 return BadRequest("Course Already Exists");
             }
 
             var course = new CourseModel
             {
-                CourseName = newCourseModel.CourseName,
-                Description = newCourseModel.Description,
+                CourseName_ka = newCourseModel.CourseName_ka,
+                CourseName_en = newCourseModel.CourseName_en,
+                Description_ka = newCourseModel.Description_ka,
+                Description_en = newCourseModel.Description_en,
                 CourseLogo = newCourseModel.CourseLogo,
                 FormattedCourseName = newCourseModel.FormattedCourseName,
                 LevelId = newCourseModel.LevelId
@@ -239,8 +315,10 @@ namespace LearnAPI.Controllers
                 return NotFound("Course Not Found");
             }
 
-            course.CourseName = newcourse.CourseName;
-            course.Description = newcourse.Description;
+            course.CourseName_ka = newcourse.CourseName_ka;
+            course.CourseName_en = newcourse.CourseName_en;
+            course.Description_ka = newcourse.Description_ka;
+            course.Description_en = newcourse.Description_en;
             course.LevelId = newcourse.LevelId;
 
             await _context.SaveChangesAsync();
@@ -315,7 +393,7 @@ namespace LearnAPI.Controllers
         /// </summary>
         /// <param name="newsubject">დამატებული ახალი თემის ინფორმაცია.</param>
         /// <param name="coursename">კურსის სახელწოდება, რომელსაც ეკუთვნის საგანი.</param>
-        [HttpPost("Subject"), Authorize(Roles ="admin")]
+        [HttpPost("Subject"), Authorize(Roles = "admin")]
         public async Task<IActionResult> AddSubject(NewSubjectModel newsubject, string coursename)
         {
             if (!ModelState.IsValid)
@@ -330,15 +408,17 @@ namespace LearnAPI.Controllers
                 return NotFound("Course Not Found");
             }
 
-            if (_context.Subjects.Any(u => u.SubjectName == newsubject.SubjectName && u.CourseId == course.CourseId))
+            if (_context.Subjects.Any(u => u.SubjectName_ka == newsubject.SubjectName_ka && u.CourseId == course.CourseId))
             {
                 return BadRequest("Subject Already Exists");
             }
 
             var subject = new SubjectModel
             {
-                SubjectName = newsubject.SubjectName,
-                Description = newsubject.Description,
+                SubjectName_ka = newsubject.SubjectName_ka,
+                SubjectName_en = newsubject.SubjectName_en,
+                Description_ka = newsubject.Description_ka,
+                Description_en = newsubject.Description_en,
                 LogoURL = newsubject.LogoURL,
                 CourseId = course.CourseId,
             };
@@ -378,8 +458,10 @@ namespace LearnAPI.Controllers
                 return NotFound("Subject Not Found");
             }
 
-            subject.SubjectName = newsubject.SubjectName;
-            subject.Description = newsubject.Description;
+            subject.SubjectName_ka = newsubject.SubjectName_ka;
+            subject.SubjectName_en = newsubject.SubjectName_en;
+            subject.Description_ka = newsubject.Description_ka;
+            subject.Description_en = newsubject.Description_en;
             subject.LogoURL = newsubject.LogoURL;
 
             await _context.SaveChangesAsync();
@@ -457,28 +539,29 @@ namespace LearnAPI.Controllers
         /// <param name="newlesson">დამატებული ახალი გაკვეთილის ინფორმაცია.</param>
         /// <param name="subjectname">თემის სახელწოდება, რომელსაც ეკუთვნის საგანი.</param>
         [HttpPost("Lesson"), Authorize(Roles = "admin")]
-        public async Task<IActionResult> AddLesson(NewLessonModel newlesson, string subjectname)
+        public async Task<IActionResult> AddLesson(NewLessonModel newlesson, string subjectname_en)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var subject = await _context.Subjects.FirstOrDefaultAsync(u => u.SubjectName == subjectname);
+            var subject = await _context.Subjects.FirstOrDefaultAsync(u => u.SubjectName_en == subjectname_en);
 
             if (subject == null)
             {
                 return NotFound("Subject Not Found");
             }
 
-            if (_context.Lessons.Any(u => u.LessonName == newlesson.LessonName && u.SubjectId == subject.SubjectId))
+            if (_context.Lessons.Any(u => u.LessonName_ka == newlesson.LessonName_ka && u.SubjectId == subject.SubjectId))
             {
                 return BadRequest("Lesson Already Exists");
             }
 
             var lesson = new LessonModel
             {
-                LessonName = newlesson.LessonName,
+                LessonName_ka = newlesson.LessonName_ka,
+                LessonName_en = newlesson.LessonName_en,
                 SubjectId = subject.SubjectId,
             };
 
@@ -517,7 +600,8 @@ namespace LearnAPI.Controllers
                 return NotFound("Lesson Not Found");
             }
 
-            lesson.LessonName = newlesson.LessonName;
+            lesson.LessonName_ka = newlesson.LessonName_ka;
+            lesson.LessonName_en = newlesson.LessonName_en;
             lesson.SubjectId = lesson.SubjectId;
 
             await _context.SaveChangesAsync();
@@ -589,8 +673,8 @@ namespace LearnAPI.Controllers
         /// ამატებს ახალ ტესტს.
         /// </summary>
         /// <param name="test">დამატებული ახალი ტესტის ინფორმაცია.</param>
-        [HttpPost("Tests/{LearnId}"), Authorize(Roles ="admin")]
-        public async Task<ActionResult<TestModel>> PostTest(NewTestModel test , int LearnId)
+        [HttpPost("Tests/{LearnId}"), Authorize(Roles = "admin")]
+        public async Task<ActionResult<TestModel>> PostTest(NewTestModel test, int LearnId)
         {
             if (!ModelState.IsValid)
             {
@@ -631,7 +715,7 @@ namespace LearnAPI.Controllers
         /// </summary>
         /// <param name="id">რედაქტირებადი ტესტის უნიკალური იდენტიფიკატორი.</param>
         /// <param name="test">ტესტის განახლებული ინფორმაცია.</param>
-        [HttpPut("Tests/{id}"), Authorize(Roles ="admin")]
+        [HttpPut("Tests/{id}"), Authorize(Roles = "admin")]
         public async Task<IActionResult> PutTest(int id, TestModel test)
         {
             if (!ModelState.IsValid)

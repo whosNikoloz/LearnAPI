@@ -11,10 +11,13 @@ namespace LearnAPI.Model.Learn
         public int CourseId { get; set; }
 
         [Required]
-        public string? CourseName { get; set; }
+        public string? CourseName_ka { get; set; }
+        [Required]
+        public string? CourseName_en { get; set; }
 
         public string? FormattedCourseName { get; set; }
-        public string? Description { get; set; }
+        public string? Description_ka { get; set; }
+        public string? Description_en { get; set; }
 
         public string? CourseLogo { get; set; }
 
@@ -30,5 +33,6 @@ namespace LearnAPI.Model.Learn
         public virtual ICollection<ProgressModel> Progresses { get; set; } = new List<ProgressModel>();
 
         public virtual ICollection<CourseEnrollmentModel> Enrollments { get; set; } = new List<CourseEnrollmentModel>();
+
     }
 }
