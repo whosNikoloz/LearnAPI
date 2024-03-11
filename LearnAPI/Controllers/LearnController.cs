@@ -220,30 +220,49 @@ namespace LearnAPI.Controllers
         public async Task<IActionResult> Course(string courseName, string lang = "ka")
         {
             var course = await _context.Courses
-                .Include(u => u.Level)
-                .Include(u => u.Subjects).ThenInclude(s => s.Lessons)
-                .Include(u => u.Enrollments)
-                .FirstOrDefaultAsync(u => u.FormattedCourseName == courseName);
+        .Include(u => u.Level)
+        .Include(u => u.Subjects).ThenInclude(s => s.Lessons)
+        .Include(u => u.Enrollments)
+        .FirstOrDefaultAsync(u => u.FormattedCourseName == courseName);
 
             if (course == null)
             {
                 return NotFound("Course Not Found");
             }
 
-            // Determine which property to return based on the language
-            string courseNameProperty = lang == "en" ? "CourseName_en" : "CourseName_ka";
-            string descriptionProperty = lang == "en" ? "Description_en" : "Description_ka";
+            // Determine which property to return based on the language for course name and description
+            string courseNameProperty = lang == "en" ? course.CourseName_en : course.CourseName_ka;
+            string descriptionProperty = lang == "en" ? course.Description_en : course.Description_ka;
+
+            // Determine which property to return based on the language for subject name and description
+            Func<SubjectModel, string?> subjectNameSelector = lang == "en" ? (Func<SubjectModel, string?>)(s => s.SubjectName_en) : s => s.SubjectName_ka;
+            Func<SubjectModel, string?> subjectDescriptionSelector = lang == "en" ? (Func<SubjectModel, string?>)(s => s.Description_en) : s => s.Description_ka;
+
+            // Determine which property to return based on the language for lesson name
+            Func<LessonModel, string?> lessonNameSelector = lang == "en" ? (Func<LessonModel, string?>)(l => l.LessonName_en) : l => l.LessonName_ka;
 
             // Create a new object with language-specific properties
             var courseDto = new
             {
                 CourseId = course.CourseId,
-                CourseName = EF.Property<string>(course, courseNameProperty),
-                Description = EF.Property<string>(course, descriptionProperty),
+                CourseName = courseNameProperty,
+                Description = descriptionProperty,
                 FormattedCourseName = course.FormattedCourseName,
                 CourseLogo = course.CourseLogo,
                 Level = course.Level,
-                Subjects = course.Subjects,
+                Subjects = course.Subjects.Select(s => new
+                {
+                    SubjectId = s.SubjectId,
+                    SubjectName = subjectNameSelector(s),
+                    Description = subjectDescriptionSelector(s),
+                    LogoURL = s.LogoURL,
+                    Lessons = s.Lessons.Select(l => new
+                    {
+                        LessonId = l.LessonId,
+                        LessonName = lessonNameSelector(l),
+                        LearnMaterial = l.LearnMaterial
+                    })
+                }),
                 Enrollments = course.Enrollments
             };
 
